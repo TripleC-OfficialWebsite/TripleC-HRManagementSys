@@ -1,10 +1,12 @@
 from flask import Flask
+from flask_cors import CORS
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
 uri = "mongodb+srv://root:28GJiZtTYasykeil@cluster0.4lirrab.mongodb.net/?retryWrites=true&w=majority"
 
 app = Flask(__name__)
+CORS(app)
 
 # Create a new client and connect to the server
 client = MongoClient(uri, server_api=ServerApi('1'), tls=True,
