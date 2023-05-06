@@ -35,47 +35,12 @@ def get():
     data = []
     for document in test.find({}, {"_id": 0}):
         data.append({
+            "collection": document["collection"],
             "username": document["username"],
             "password": document["password"]
         })
     return jsonify(data)
 
-
-
-@app.route('/delete', methods=['DELETE'])
-def removeAdmin():
-    key = request.args.get('username')
-    if not key:
-        return jsonify({'error': 'Missing username'}), 400
-    query = {'username': key}
-    result = test.delete_one(query)
-    if result.deleted_count == 1:
-        return jsonify({'success': f'Admin {key} deleted successfully'}), 200
-    else:
-        return jsonify({'error': f'Admin {key} not found'}), 404
-    
-@app.route('/validate', methods=['GET'])
-def validateAdmin():
-    key = request.args.get('username')
-    value = request.args.get('password')
-    if not key or not value:
-        return jsonify({'error': 'Missing username or password'}), 400
-    query = {'username': key,'password': value}
-    admin = test.find_one(query)
-    if not admin:
-        return jsonify({'error': 'Invalid username or password'}), 401
-    else:
-        admin["_id"] = str(admin["_id"])
-        return jsonify(admin), 200
-# db = client.manageSys
-# test = db.test
-# @app.route("/add", methods=["POST"])
-# def addAdmin():
-#     key = request.args.get('username')
-#     value = request.args.get('password')
-#     data = {'username': key,'password': value}
-#     test.insert_one(data)
-#     return "0"
 
 if __name__ == "__main__":
     app.run(debug=True)

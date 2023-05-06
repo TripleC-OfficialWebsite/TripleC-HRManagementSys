@@ -4,12 +4,11 @@ from flask_cors import CORS
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
-adminAPI = Blueprint('admin_api', __name__)
+memberAPI = Blueprint('member_api', __name__)
 
 uri = "mongodb+srv://root:28GJiZtTYasykeil@cluster0.4lirrab.mongodb.net/?retryWrites=true&w=majority"
 
-# app = Flask(__name__)
-CORS(adminAPI)
+CORS(memberAPI)
 
 # # Create a new client and connect to the server
 client = MongoClient(uri, server_api=ServerApi('1'), tls=True,
@@ -25,7 +24,7 @@ except Exception as e:
 db = client.manageSys
 test = db.test
 
-@adminAPI.route('/delete', methods=['DELETE'])
+@memberAPI.route('/delete', methods=['DELETE'])
 def removeAdmin():
     key = request.args.get('username')
     if not key:
@@ -37,7 +36,7 @@ def removeAdmin():
     else:
         return jsonify({'error': f'Admin {key} not found'}), 404
     
-@adminAPI.route('/validate', methods=['GET'])
+@memberAPI.route('/validate', methods=['GET'])
 def validateAdmin():
     key = request.args.get('username')
     value = request.args.get('password')
@@ -51,7 +50,7 @@ def validateAdmin():
         admin["_id"] = str(admin["_id"])
         return jsonify(admin), 200
 
-@adminAPI.route("/add", methods=["POST"])
+@memberAPI.route("/add", methods=["POST"])
 def addAdmin():
     key = request.args.get('username')
     value = request.args.get('password')
