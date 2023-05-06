@@ -3,6 +3,7 @@ from flask import Flask, request,jsonify
 from flask_cors import CORS
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+from app import collections
 
 memberAPI = Blueprint('member_api', __name__)
 
@@ -22,7 +23,17 @@ except Exception as e:
     print(e)
 
 db = client.manageSys
-test = db.test
+test = collections
+
+@memberAPI.route("/", methods=["GET"])
+def get():
+    data = []
+    for document in test.find({}, {"_id": 0}):
+        data.append({
+            "username": document["username"],
+            "password": document["password"]
+        })
+    return jsonify(data)
 
 @memberAPI.route('/delete', methods=['DELETE'])
 def removeAdmin():

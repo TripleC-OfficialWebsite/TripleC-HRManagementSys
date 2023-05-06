@@ -3,6 +3,7 @@ from flask import Flask, request,jsonify
 from flask_cors import CORS
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+from app import collections
 
 adminAPI = Blueprint('admin_api', __name__)
 
@@ -22,9 +23,18 @@ try:
 except Exception as e:
     print(e)
 
-db = client.manageSys
-test = db.test
+# db = client.manageSys
+test = collections
 
+@adminAPI.route("/", methods=["GET"])
+def get():
+    data = []
+    for document in test.find({}, {"_id": 0}):
+        data.append({
+            "username": document["username"],
+            "password": document["password"]
+        })
+    return jsonify(data)
 @adminAPI.route('/delete', methods=['DELETE'])
 def removeAdmin():
     key = request.args.get('username')
@@ -53,8 +63,10 @@ def validateAdmin():
 
 @adminAPI.route("/add", methods=["POST"])
 def addAdmin():
+    collection = request.args.get('collection')
     key = request.args.get('username')
     value = request.args.get('password')
-    data = {'username': key,'password': value}
+    data = {"collection": collection,'username': key,'password': value}
     test.insert_one(data)
     return "0"
+

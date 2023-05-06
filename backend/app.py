@@ -28,18 +28,21 @@ except Exception as e:
     print(e)
 
 db = client.manageSys
-test = db.test
+# test = db.test
 
+admin_collection = db['admin']
+member_collection = db['member']
+collections = {'admin':admin_collection,'member':member_collection}
 @app.route("/", methods=["GET"])
 def get():
+    collection = request.args.get('collection')
+    if (collection not in collections):
+        return jsonify({'error': f'Collection {collection} not found'}), 404
     data = []
-    for document in test.find({}, {"_id": 0}):
-        data.append({
-            "collection": document["collection"],
-            "username": document["username"],
-            "password": document["password"]
-        })
+    for document in collections[collection].find({}, {"_id": 0}):
+        data.append(document)
     return jsonify(data)
+
 
 
 if __name__ == "__main__":
