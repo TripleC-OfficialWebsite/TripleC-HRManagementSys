@@ -1,13 +1,18 @@
 from flask import Flask, request,jsonify
-from flask_cors import CORS
+# from flask_cors import CORS
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
-from admin import admin_api
+from admin import adminAPI
+
+app = Flask(__name__)
+
+app.register_blueprint(adminAPI)
+
 
 uri = "mongodb+srv://root:28GJiZtTYasykeil@cluster0.4lirrab.mongodb.net/?retryWrites=true&w=majority"
 
-app = Flask(__name__)
-CORS(app)
+# app = Flask(__name__)
+# CORS(app)
 
 # Create a new client and connect to the server
 client = MongoClient(uri, server_api=ServerApi('1'), tls=True,
@@ -33,13 +38,7 @@ def get():
         })
     return jsonify(data)
 
-@app.route("/add", methods=["POST"])
-def addAdmin():
-    key = request.args.get('username')
-    value = request.args.get('password')
-    data = {'username': key,'password': value}
-    test.insert_one(data)
-    return "0"
+
 
 @app.route('/delete', methods=['DELETE'])
 def removeAdmin():
