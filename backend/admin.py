@@ -3,7 +3,7 @@ from flask import Flask, request,jsonify
 from flask_cors import CORS
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
-from app import collections
+# from app import collections
 
 adminAPI = Blueprint('admin_api', __name__)
 
@@ -15,6 +15,8 @@ CORS(adminAPI)
 # # Create a new client and connect to the server
 client = MongoClient(uri, server_api=ServerApi('1'), tls=True,
                              tlsAllowInvalidCertificates=True)
+db = client.manageSys
+admin_collection = db['admin']
 
 # Send a ping to confirm a successful connection
 try:
@@ -24,9 +26,9 @@ except Exception as e:
     print(e)
 
 # db = client.manageSys
-test = collections
+test = admin_collection
 
-@adminAPI.route("/", methods=["GET"])
+@adminAPI.route("/admin", methods=["GET"])
 def get():
     data = []
     for document in test.find({}, {"_id": 0}):
@@ -35,7 +37,7 @@ def get():
             "password": document["password"]
         })
     return jsonify(data)
-@adminAPI.route('/delete', methods=['DELETE'])
+@adminAPI.route('/admin_delete', methods=['DELETE'])
 def removeAdmin():
     key = request.args.get('username')
     if not key:
@@ -47,7 +49,7 @@ def removeAdmin():
     else:
         return jsonify({'error': f'Admin {key} not found'}), 404
     
-@adminAPI.route('/validate', methods=['GET'])
+@adminAPI.route('/admin_validate', methods=['GET'])
 def validateAdmin():
     key = request.args.get('username')
     value = request.args.get('password')
@@ -61,12 +63,12 @@ def validateAdmin():
         admin["_id"] = str(admin["_id"])
         return jsonify(admin), 200
 
-@adminAPI.route("/add", methods=["POST"])
+@adminAPI.route("/admin_add", methods=["POST"])
 def addAdmin():
-    collection = request.args.get('collection')
+    # collection = request.args.get('collection')
     key = request.args.get('username')
     value = request.args.get('password')
-    data = {"collection": collection,'username': key,'password': value}
+    data = {'username': key,'password': value}
     test.insert_one(data)
     return "0"
 

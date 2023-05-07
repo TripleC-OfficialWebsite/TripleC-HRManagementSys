@@ -3,7 +3,7 @@ from flask import Flask, request,jsonify
 from flask_cors import CORS
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
-from app import collections
+# from app import collections
 
 memberAPI = Blueprint('member_api', __name__)
 
@@ -23,9 +23,12 @@ except Exception as e:
     print(e)
 
 db = client.manageSys
-test = collections
+member_collection = db['member']
 
-@memberAPI.route("/", methods=["GET"])
+test = member_collection
+# member_collection = db['member']
+
+@memberAPI.route("/member", methods=["GET"])
 def get():
     data = []
     for document in test.find({}, {"_id": 0}):
@@ -35,7 +38,7 @@ def get():
         })
     return jsonify(data)
 
-@memberAPI.route('/delete', methods=['DELETE'])
+@memberAPI.route('/member_delete', methods=['DELETE'])
 def removeAdmin():
     key = request.args.get('username')
     if not key:
@@ -47,7 +50,7 @@ def removeAdmin():
     else:
         return jsonify({'error': f'Admin {key} not found'}), 404
     
-@memberAPI.route('/validate', methods=['GET'])
+@memberAPI.route('/member_validate', methods=['GET'])
 def validateAdmin():
     key = request.args.get('username')
     value = request.args.get('password')
@@ -61,7 +64,7 @@ def validateAdmin():
         admin["_id"] = str(admin["_id"])
         return jsonify(admin), 200
 
-@memberAPI.route("/add", methods=["POST"])
+@memberAPI.route("/member_add", methods=["POST"])
 def addAdmin():
     key = request.args.get('username')
     value = request.args.get('password')

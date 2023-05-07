@@ -2,13 +2,17 @@ from flask import Flask, request,jsonify
 from flask_cors import CORS
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
-from admin import adminAPI
+# from admin import adminAPI
+# from member import memberAPI
+import admin
+import member
 
 
 
 app = Flask(__name__)
 
-app.register_blueprint(adminAPI)
+app.register_blueprint(admin.adminAPI)
+app.register_blueprint(member.memberAPI)
 
 
 uri = "mongodb+srv://root:28GJiZtTYasykeil@cluster0.4lirrab.mongodb.net/?retryWrites=true&w=majority"
@@ -28,17 +32,19 @@ except Exception as e:
     print(e)
 
 db = client.manageSys
-# test = db.test
+test = db.test
 
-admin_collection = db['admin']
-member_collection = db['member']
-collections = {'admin':admin_collection,'member':member_collection}
+# member_collection = db['member']
+collections = {'admin':admin.admin_collection,'member':member.member_collection}
 @app.route("/", methods=["GET"])
 def get():
-    collection = request.args.get('collection')
-    if (collection not in collections):
-        return jsonify({'error': f'Collection {collection} not found'}), 404
     data = []
+    collection = request.args.get('collection')
+    if (collection == None):
+        for document in test.find({}, {"_id": 0}):
+            data.append(document)
+            return jsonify(data)
+        
     for document in collections[collection].find({}, {"_id": 0}):
         data.append(document)
     return jsonify(data)
