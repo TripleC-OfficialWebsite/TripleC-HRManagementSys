@@ -41,9 +41,10 @@ def get():
     data = []
     collection = request.args.get('collection')
     if (collection == None):
-        for document in test.find({}, {"_id": 0}):
-            data.append(document)
-            return jsonify(data)
+        for c in collections.values():
+            for document in c.find({}, {"_id": 0}):
+                data.append(document)
+        return jsonify(data)
         
     for document in collections[collection].find({}, {"_id": 0}):
         data.append(document)
