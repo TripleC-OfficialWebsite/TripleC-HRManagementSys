@@ -65,10 +65,13 @@ def validateAdmin():
 
 @adminAPI.route("/admin_add", methods=["POST"])
 def addAdmin():
-    # collection = request.args.get('collection')
     key = request.args.get('username')
     value = request.args.get('password')
     data = {'username': key,'password': value}
+    if (test.find_one(data) != None):
+        return jsonify({'error': 'Admin is already in the admin collection', 'status_code': 1})
     test.insert_one(data)
-    return "0"
+    member = test.find_one(data)
+    member_id = str(member['_id'])
+    return jsonify({'_id': member_id, 'status_code': 0})
 

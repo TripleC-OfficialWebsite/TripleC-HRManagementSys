@@ -39,7 +39,7 @@ def get():
     return jsonify(data)
 
 @memberAPI.route('/member_delete', methods=['DELETE'])
-def removeAdmin():
+def removeMember():
     key = request.args.get('username')
     if not key:
         return jsonify({'error': 'Missing username'}), 400
@@ -51,7 +51,7 @@ def removeAdmin():
         return jsonify({'error': f'Admin {key} not found'}), 404
     
 @memberAPI.route('/member_validate', methods=['GET'])
-def validateAdmin():
+def validateMember():
     key = request.args.get('username')
     value = request.args.get('password')
     if not key or not value:
@@ -65,9 +65,13 @@ def validateAdmin():
         return jsonify(admin), 200
 
 @memberAPI.route("/member_add", methods=["POST"])
-def addAdmin():
+def addMember():
     key = request.args.get('username')
     value = request.args.get('password')
     data = {'username': key,'password': value}
+    if (test.find_one(data) != None):
+        return jsonify({'error': 'Member is already in the member collection', 'status_code': 1})
     test.insert_one(data)
-    return "0"
+    member = test.find_one(data)
+    member_id = str(member['_id'])
+    return jsonify({'_id': member_id, 'status_code': 0})
