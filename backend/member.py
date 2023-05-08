@@ -3,6 +3,8 @@ from flask import Flask, request,jsonify
 from flask_cors import CORS
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+from pymongo import ReturnDocument
+from bson import ObjectId
 # from app import collections
 
 memberAPI = Blueprint('member_api', __name__)
@@ -31,11 +33,20 @@ test = member_collection
 @memberAPI.route("/member", methods=["GET"])
 def get():
     data = []
-    for document in test.find({}, {"_id": 0}):
-        data.append({
-            "username": document["username"],
-            "password": document["password"]
-        })
+    member_id = request.args.get('id')
+    if member_id:
+        member = test.find_one({"_id": ObjectId(member_id)}, {"_id": 0})
+        if member:
+            data.append({
+                "username": member["username"],
+                "password": member["password"]
+            })
+    else:
+        for document in test.find({}, {"_id": 0}):
+            data.append({
+                "username": document["username"],
+                "password": document["password"]
+            })
     return jsonify(data)
 
 @memberAPI.route('/member_delete', methods=['DELETE'])
@@ -63,15 +74,13 @@ def validateMember():
     else:
         admin["_id"] = str(admin["_id"])
         return jsonify(admin), 200
-
+    
 @memberAPI.route("/member_add", methods=["POST"])
 def addMember():
     key = request.args.get('username')
     value = request.args.get('password')
-    data = {'username': key,'password': value}
-    if (test.find_one(data) != None):
-        return jsonify({'error': 'Member is already in the member collection', 'status_code': 1})
-    test.insert_one(data)
-    member = test.find_one(data)
+    key = {'username': key}
+    member = test.find_one_and_update(key,{'$set': {'password': value}},
+                                      upsert=True,return_document=ReturnDocument.AFTER)
     member_id = str(member['_id'])
     return jsonify({'_id': member_id, 'status_code': 0})
