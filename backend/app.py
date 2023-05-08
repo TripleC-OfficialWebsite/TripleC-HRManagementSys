@@ -50,6 +50,18 @@ def get():
         data.append(document)
     return jsonify(data)
 
+## clear database
+@app.route("/collection_clear", methods=["DELETE"])
+def collection_clear():
+    collection_name = request.args.get('collection')
+    if collection_name not in collections:
+        return jsonify({'error': 'Invalid Collection Name'}), 401
+    else:
+        if collections[collection_name].count_documents({}) == 0:
+            return jsonify({'success': f'collection {collection_name} already cleared'})
+        collections[collection_name]. delete_many({})
+        return jsonify({'success': f'collection {collection_name} cleared successfully'})
+
 
 
 if __name__ == "__main__":
