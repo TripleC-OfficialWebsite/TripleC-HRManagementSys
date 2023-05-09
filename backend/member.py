@@ -28,31 +28,45 @@ member_collection = db['member']
 
 test = member_collection
 
+# either query by id or name
+# or get all documents under member collection
 @memberAPI.route("/member", methods=["GET"])
 def get():
     data = []
     member_id = request.args.get('id')
+    name = request.args.get('fullname')
+    
     if member_id:
-        member = test.find_one({"_id": ObjectId(member_id)}, {"_id": 0})
-        if member:
-            data.append(member)
+        query = {"_id": ObjectId(member_id)}
+    elif name:
+        query = {"fullname": name}
     else:
         for document in test.find({}, {"_id": 0}):
             data.append(document)
+        return jsonify(data)
+    member = test.find_one(query, {"_id": 0})
+    if member:
+        data.append(member)
+        return jsonify(data)
+    else:
+        return jsonify({'error':f'Member {query} not found'}), 404
 
-    return jsonify(data)
-## use find_one to validate every document and delete the corresponding document
+# remove member by fullname
 @memberAPI.route('/member_delete', methods=['DELETE'])
 def removeMember():
-    key = request.args.get('username')
-    if not key:
-        return jsonify({'error': 'Missing username'}), 400
-    query = {'username': key}
+    name = request.args.get('fullname')
+    id = request.args.get('id')
+    if not name and not id:
+        return jsonify({'error': 'Missing fullname or id'}), 400
+    if id:
+        query = {"_id": ObjectId(id)}
+    if name:
+        query = {'fullname': name}
     result = test.delete_one(query)
     if result.deleted_count == 1:
-        return jsonify({'success': f'Admin {key} deleted successfully'}), 200
+        return jsonify({'success': f'Member {query} deleted successfully'}), 200
     else:
-        return jsonify({'error': f'Admin {key} not found'}), 404
+        return jsonify({'error': f'Member {query} not found'}), 404
     
 # @memberAPI.route('/member_validate', methods=['GET'])
 # def validateMember():
@@ -68,50 +82,39 @@ def removeMember():
 #         admin["_id"] = str(admin["_id"])
 #         return jsonify(admin), 200
     
+# if not found, add insert a new document, else update the old one
 @memberAPI.route("/member_add", methods=["POST"])
 def addMember():
-    key = request.args.get('username')
+    id = request.args.get('id')
+    name = request.args.get('fullname')
+
     data = request.args
-    key = {'username': key}
-    update = {'$set':{key:value} for key,value in data.items() if key != 'username'}
-    member = test.find_one_and_update(key,update,
-                                      upsert=True,return_document=ReturnDocument.AFTER)
+
+    query = {"_id": ObjectId(id)} if id else {'fullname':name}
+    queryBy = 'id' if id else 'fullname'
+
+    update = {'$set':{key:value} for key,value in data.items() if key != queryBy}
+    member = test.find_one_and_update(query,update,
+                                        upsert=True,return_document=ReturnDocument.AFTER)
     member_id = str(member['_id'])
+    
     return jsonify({'_id': member_id, 'status_code': 0})
 
-## add member info from a local file
+# add member info from a local file
 @memberAPI.route("/member_add_file", methods=["POST"])
 def addMember_file():
     filename = request.args.get('filename')
     with open(filename, 'r') as reader:
-        # reader = csv.DictReader(f1)
-        # for row in reader:
-        #     # Create a dictionary with custom keys
-        #     doc = {
-        #         "fullname": row['fullname'],
-        #         "department": row['department'],
-        #         "pos": row['pos'],
-        #         "project_group": row['project_group'],
-        #         "pos_group": row['pos_group'],
-        #         "grade": row['grade'],
-        #         "email": row['email'],
-        #         "wechat": row['wechat'],
-        #         "enroll_time": row['enroll_time'],
-        #         "linkedin": row['linkedin'],
-        #         "github": row['github']
-        #     }
-        #     if (test.find_one(doc) == None):
-        #         test.insert_one(doc)
         lines = reader.readlines()
         type = lines[0].split(",")
         lines = lines[1:]
         for l in lines:
 
             data = l.split(",")
+            data = [d.strip() for d in data]
             doc = dict(zip(type, data))
             if (test.find_one(doc) == None):
                 test.insert_one(doc)
-
 
     return jsonify({'success': f'{filename} successfully loaded' })
     
