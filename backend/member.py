@@ -51,6 +51,46 @@ def get():
     else:
         return jsonify({'error':f'Member {query} not found'}), 404
 
+# given page number and limit, retrieve within range
+# source of cursor:
+#   https://pymongo.readthedocs.io/en/stable/api/pymongo/cursor.html#pymongo.cursor.Cursor
+@memberAPI.route("/member_range", methods=["GET"])
+def getRange():
+    data = []
+    page_num = int(request.args.get('page'))
+    limit = int(request.args.get('limit'))
+    documents = test.find({}, {"_id": 0}) # type(documents) == cursor
+    for document in documents.skip(page_num * limit).limit(limit):
+        data.append(document)
+    return jsonify(data)
+
+# search with filter
+@memberAPI.route("/member_search", methods=["GET"])
+def search():
+    data = []
+    departments = request.args.get('department')
+    projects = request.args.get('project')
+
+    dept_pairs = departments.split(",")
+    proj_pairs = projects.split(",")
+
+    departments_data = {p.split(":")[0]:p.split(":")[1] for p in dept_pairs}
+    projects_data = {p.split(":")[0]:p.split(":")[1] for p in proj_pairs}
+
+    for dept,role in departments_data.items():
+        document = test.find({"department": dept.upper(),"pos": role.title()}, {"_id": 0})
+        for d in document:
+            if d not in data:
+                data.append(d)
+    
+    for proj,role in projects_data.items():
+        document = test.find({"project_group": proj,"pos_group": role.title()}, {"_id": 0})
+        for d in document:
+            if d not in data:
+                data.append(d)
+    
+    return jsonify(data)
+
 # remove member by fullname
 @memberAPI.route('/member_delete', methods=['DELETE'])
 def removeMember():
@@ -67,20 +107,6 @@ def removeMember():
         return jsonify({'success': f'Member {query} deleted successfully'}), 200
     else:
         return jsonify({'error': f'Member {query} not found'}), 404
-    
-# @memberAPI.route('/member_validate', methods=['GET'])
-# def validateMember():
-#     key = request.args.get('username')
-#     value = request.args.get('password')
-#     if not key or not value:
-#         return jsonify({'error': 'Missing username or password'}), 400
-#     query = {'username': key,'password': value}
-#     admin = test.find_one(query)
-#     if not admin:
-#         return jsonify({'error': 'Invalid username or password'}), 401
-#     else:
-#         admin["_id"] = str(admin["_id"])
-#         return jsonify(admin), 200
     
 # if not found, add insert a new document, else update the old one
 @memberAPI.route("/member_add", methods=["POST"])
@@ -111,10 +137,13 @@ def addMember_file():
         for l in lines:
 
             data = l.split(",")
-            data = [d.strip() for d in data]
+            data = [d.strip() if len(d.strip())>0 else 'N/A' for d in data ]
+            data = [data[i].title() if i == 2 or i == 4 or i == 8 else data[i] for i in range(len(data))]
+
             doc = dict(zip(type, data))
             if (test.find_one(doc) == None):
                 test.insert_one(doc)
 
     return jsonify({'success': f'{filename} successfully loaded' })
     
+# member_search?department=SWE:Member,PD:PD Chair&project=NutriPlan:backend
