@@ -55,16 +55,14 @@ def get_photo():
     response = requests.get(url)
     files = response.json().get('files', [])
 
-    ret = []
     if not files:
         return jsonify({'error': 'No file found'}), 404
 
     else:
         for file in files:
             if (file["name"] == filename):
-                link = 'https://drive.google.com/file/d/' + f'{file["id"]}' + '/view'
-                ret.append({filename: link})
-                return jsonify(ret)
+                link = f'https://drive.google.com/file/d/{file["id"]}/view'
+                return jsonify([{filename: link}])
         return jsonify({'error': f'{filename} not found'}), 404
 
 
@@ -97,6 +95,5 @@ def collection_clear():
 
 
 if __name__ == "__main__":
-    # list_files_in_folder(folder_id)
     app.run(debug=True)
     

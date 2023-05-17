@@ -3,6 +3,7 @@ from flask_cors import CORS
 from pymongo import MongoClient
 from bson import ObjectId
 from pymongo import ReturnDocument
+import xlsxwriter
 
 
 
@@ -121,20 +122,50 @@ def addMember_file():
 
     with open(filename, 'r') as reader:
         lines = reader.readlines()
-        header = lines[0].split(",")
+        header = [h.strip().title() for h in lines[0].split(",")]
         lines = lines[1:]  # Skip the header row
 
+        member_docs = []
+
         for line in lines:
-            data = line.split(",")
-            data = [d.strip() if len(d.strip()) > 0 else 'N/A' for d in data]
-            data = [data[i].title() if i == 2 or i == 4 or i == 8 else data[i] for i in range(len(data))]
+            data = [d.strip() if d.strip() else 'N/A' for d in line.split(",")]
+            data = [d.title() if i == 2 or i == 4 or i == 8 else d for i, d in enumerate(data)]
 
             doc = dict(zip(header, data))
+            member_docs.append(doc)
 
-            if member_collection.find_one(doc) is None:
-                member_collection.insert_one(doc)
-            # else: 
+        # Insert all documents in bulk
+        member_collection.insert_many(member_docs)
 
-    return jsonify({'success': f'{filename} successfully loaded'})
+    return jsonify({'success': f'{filename} successfully imported'})
+
+
+
+@memberAPI.route("/member_export", methods=["GET"])
+def export_Member_file():
+    filename = 'Members.xlsx'
+    workbook = xlsxwriter.Workbook(filename)
+    worksheet = workbook.add_worksheet()
+
+    data = list(member_collection.find({}, {"_id": 0}))
+
+    # Set headers
+    header_format = workbook.add_format({'bold': True})
+    for column, key in enumerate(data[0]):
+        worksheet.write(0, column, key, header_format)
+
+    # Write data
+    for row, member in enumerate(data, start=1):
+        for column, info in enumerate(member.values()):
+                worksheet.write(row, column, info)
+
+    # Set width to 15 characters
+    for column in range(len(data[0])):
+        worksheet.set_column(column, column, 15) 
+
+    workbook.close()
+
+    return jsonify({'success': f'{filename} successfully exported'})
+
 
 # member_search?department=SWE:Member,PD:PD Chair&project=NutriPlan:backend
