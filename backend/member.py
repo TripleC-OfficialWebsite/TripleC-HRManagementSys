@@ -96,14 +96,16 @@ def get():
 def removeMember():
     input_data = request.get_json()
     assert {'fullname', '_id'}.intersection(input_data.keys()), "Bad request data"
-    if '_id' in input_data:
-        id = input_data['_id']
-        query = {"_id": ObjectId(id)}
-    else:
-        name = input_data['fullname']
-        query = {'fullname': name}
-    result = test.delete_one(query)
-    if result.deleted_count == 1:
+    
+    keys = input_data.get('fullname')
+    if not keys:
+        return jsonify({'error': f'no'}),200
+    
+    query = {'fullname': {'$in': keys}}
+
+    result = test.delete_many(query)
+
+    if result.deleted_count >= 1:
         return jsonify({'success': f'Member {query} deleted successfully'}), 200
     else:
         return jsonify({'error': f'Member {query} not found'}), 404
@@ -114,8 +116,10 @@ def addMember():
     data = request.get_json()
     assert {'fullname', 'department', 'depart_role', 'project', 'project_role'}.issubset(data.keys()), "Bad request data"
     query = {"_id": ObjectId(data['_id'])} if '_id' in data else {'fullname': data['fullname']}
+    
+    
     update = {
-        "$push": {
+        "$addToSet": {
             "Department": {'department': data['department'], 'depart_role': data['depart_role']},
             "Project": {'project': data['project'], 'project_role': data['project_role']}
         }
@@ -141,10 +145,23 @@ def addMember_file():
             data = [d.strip() if len(d.strip())>0 else 'N/A' for d in data ]
             data = [data[i].title() if i == 2 or i == 4 or i == 8 else data[i] for i in range(len(data))]
 
-            doc = dict(zip(type, data))
-            if (test.find_one(doc) == None):
+            data = dict(zip(type, data))
+            
+            fullname = data.get('fullname')
+            department = data.get('department')
+            depart_role = data.get('pos')
+            project = data.get('project_group')
+            project_role = data.get('pos_group')
+
+            doc = {
+                "fullname": fullname,
+                "Department": [{'department': department, 'depart_role': depart_role}],
+                "Project": [{'project': project, 'project_role': project_role}]
+            }
+            
+            existing_member = test.find_one({"fullname": fullname})
+            if existing_member is None:
                 test.insert_one(doc)
+            
 
     return jsonify({'success': f'{filename} successfully loaded' })
-    
-# member_search?department=SWE:Member,PD:PD Chair&project=NutriPlan:backend
