@@ -116,8 +116,8 @@ def addMember():
     query = {"_id": ObjectId(data['_id'])} if '_id' in data else {'fullname': data['fullname']}
     update = {
         "$push": {
-            "Department": {'key': data['department'], 'value': data['depart_role']},
-            "Project": {'key': data['project'], 'value': data['project_role']}
+            "Department": {'depart': data['department'], 'depart_role': data['depart_role']},
+            "Project": {'proj': data['project'], 'proj_role': data['project_role']}
         }
     }
     
