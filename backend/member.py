@@ -59,20 +59,21 @@ def search():
     departments = request.args.get('department')
     projects = request.args.get('project')
 
-#     dept_pairs = departments.split(",")
-#     proj_pairs = projects.split(",")
+    data = []
+    dept_pairs = departments.split(",")
+    proj_pairs = projects.split(",")
 
     departments_data = {p.split(":")[0]: p.split(":")[1] for p in dept_pairs}
     projects_data = {p.split(":")[0]: p.split(":")[1] for p in proj_pairs}
 
     for dept,role in departments_data.items():
-        document = test.find({"department": dept.upper(),"pos": role.title()}, {"_id": 0})
+        document = member_collection.find({"department": dept.upper(),"pos": role.title()}, {"_id": 0})
         for d in document:
             if d not in data:
                 data.append(d)
     
     for proj,role in projects_data.items():
-        document = test.find({"project_group": proj,"pos_group": role.title()}, {"_id": 0})
+        document = member_collection.find({"project_group": proj,"pos_group": role.title()}, {"_id": 0})
         for d in document:
             if d not in data:
                 data.append(d)
@@ -84,16 +85,21 @@ def search():
 def removeMember():
     input_data = request.get_json()
     assert {'fullname', '_id'}.intersection(input_data.keys()), "Bad request data"
+    query = 0
+    if 'fullname' in input_data:
+        # return jsonify({'error': f'no'}),200
+        keys = input_data.get('fullname')
+        query = {'fullname': {'$in': keys}}
     
-    keys = input_data.get('fullname')
-    if not keys:
-        return jsonify({'error': f'no'}),200
+    if '_id' in input_data:
+        id = input_data('_id')
+        query = {"_id": {'$in': ObjectId(id)}}
+    # keys = input_data.get('fullname')
+    if isinstance(query,int):
+        return jsonify({'error': 'fullname or id not found'}), 404
     
-    query = {'fullname': {'$in': keys}}
-
-    result = test.delete_many(query)
-
-    if result.deleted_count >= 1:
+    result = member_collection.delete_many(query)
+    if result.deleted_count == len(query.values()[0]):
         return jsonify({'success': f'Member {query} deleted successfully'}), 200
     else:
         return jsonify({'error': f'Member {query} not found'}), 404
@@ -102,23 +108,21 @@ def removeMember():
 @memberAPI.route("/member_add", methods=["POST"])
 def addMember():
     data = request.get_json()
-    assert {'fullname', 'department', 'depart_role', 'project', 'project_role'}.issubset(data.keys()), "Bad request data"
-    query = {"_id": ObjectId(data['_id'])} if '_id' in data else {'fullname': data['fullname']}
-    
-    
-    update = {
-        "$addToSet": {
-            "Department": {'department': data['department'], 'depart_role': data['depart_role']},
-            "Project": {'project': data['project'], 'project_role': data['project_role']}
-        }
-    }
-    
-    member = test.find_one_and_update(query,update,
-                                        upsert=True,return_document=ReturnDocument.AFTER)
+    # member_id = data.get('id')
+    fullname = data['fullname']
+
+    # data = request.args
+
+    query = {'fullname': fullname}
+    # queryBy = 'id' if member_id else 'fullname'
+    data = {key:''.join(data[key]) if key == 'fullname' else data[key].split(',') for key in data.keys()}
+
+    update = {'$set': {key: value} for key, value in data.items() if key != 'fullname'}
+
+    member = member_collection.find_one_and_update(query, update, upsert=True, return_document=ReturnDocument.AFTER)
     member_id = str(member['_id'])
     
     return jsonify({'_id': member_id, 'status_code': 0})
-
 
 # Add member info from a local file
 @memberAPI.route("/member_add_file", methods=["POST"])
@@ -127,16 +131,29 @@ def addMember_file():
 
     with open(filename, 'r') as reader:
         lines = reader.readlines()
-        header = [h.strip().title() for h in lines[0].split(",")]
+        header = [h.strip() for h in lines[0].split(",")][:5]
         lines = lines[1:]  # Skip the header row
 
         member_docs = []
 
         for line in lines:
-            data = [d.strip() if d.strip() else 'N/A' for d in line.split(",")]
-            data = [d.title() if i == 2 or i == 4 or i == 8 else d for i, d in enumerate(data)]
+            data = [d.strip() if d.strip() else 'None' for d in line.split(",")]
+            data = [d.title() if i == 2 or i == 4 else d for i, d in enumerate(data)]
+            data = [d.split('/') if data.index(d)!=0 else d for d in data ]
+            data = dict(zip(header, data))
+            
+            print(data)
+            fullname = data.get('fullname')
+            department = data.get('department')
+            depart_role = data.get('pos')
+            project = data.get('project_group')
+            project_role = data.get('pos_group')
 
-            doc = dict(zip(header, data))
+            doc = {
+                "Fullname": fullname,
+                "Department": [{'department': department, 'depart_role': depart_role}],
+                "Project": [{'project': project, 'project_role': project_role}]
+            }
             member_docs.append(doc)
 
         # Insert all documents in bulk
@@ -170,23 +187,4 @@ def export_Member_file():
 
     workbook.close()
 
-            data = dict(zip(type, data))
-            
-            fullname = data.get('fullname')
-            department = data.get('department')
-            depart_role = data.get('pos')
-            project = data.get('project_group')
-            project_role = data.get('pos_group')
-
-            doc = {
-                "fullname": fullname,
-                "Department": [{'department': department, 'depart_role': depart_role}],
-                "Project": [{'project': project, 'project_role': project_role}]
-            }
-            
-            existing_member = test.find_one({"fullname": fullname})
-            if existing_member is None:
-                test.insert_one(doc)
-            
-
-    return jsonify({'success': f'{filename} successfully loaded' })
+    return jsonify({'success': f'{filename} successfully exported' })
