@@ -69,7 +69,7 @@ const LogIn = () => {
           value={userInfo.password}
         />
       </form>
-      <button className="submit" onClick={validateUser}>
+      <button className="submit btn btn-primary" onClick={validateUser}>
         Sign In
       </button>
       <button onClick={getResult}>Get Current Table</button>
