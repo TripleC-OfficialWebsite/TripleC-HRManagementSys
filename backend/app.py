@@ -6,8 +6,12 @@ from pymongo.server_api import ServerApi
 # from member import memberAPI
 import admin
 import member
+import requests
 
+# imports for google drive api
 
+SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
+CREDENTIALS_FILE = 'Credential.json'
 
 app = Flask(__name__)
 
@@ -31,11 +35,37 @@ try:
 except Exception as e:
     print(e)
 
+
 db = client.manageSys
 test = db.test
 
 # member_collection = db['member']
 collections = {'admin':admin.admin_collection,'member':member.member_collection}
+
+# get photos with filename
+@app.route("/photo", methods=["get"])
+def get_photo():
+    filename = request.args.get('filename')
+
+    # do not change
+    folder_id = '18TIDcCxduEub6ysnNYmSflEKoldtzn7f'
+    api_key = 'AIzaSyB7Rvjg9mV1HnFVsSnalkD2cQw_z4bScio'
+    url = f'https://www.googleapis.com/drive/v3/files?q=%27{folder_id}%27+in+parents+and+trashed%3Dfalse&key={api_key}'
+
+    response = requests.get(url)
+    files = response.json().get('files', [])
+
+    if not files:
+        return jsonify({'error': 'No file found'}), 404
+
+    else:
+        for file in files:
+            if (file["name"] == filename):
+                link = f'https://drive.google.com/file/d/{file["id"]}/view'
+                return jsonify([{filename: link}])
+        return jsonify({'error': f'{filename} not found'}), 404
+
+
 @app.route("/", methods=["GET"])
 def get():
     data = []
@@ -66,3 +96,4 @@ def collection_clear():
 
 if __name__ == "__main__":
     app.run(debug=True)
+    
