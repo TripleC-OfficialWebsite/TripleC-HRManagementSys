@@ -33,12 +33,12 @@ test = member_collection
 @memberAPI.route("/member", methods=["GET"])
 def get():
     data = []
-    member_id = request.args.get('id')
-    name = request.args.get('fullname')
-    
-    if member_id:
+    input_data = request.get_json()
+    if '_id' in input_data:
+        member_id = input_data['_id']
         query = {"_id": ObjectId(member_id)}
-    elif name:
+    elif 'fullname' in input_data:
+        name = input_data['fullname']
         query = {"fullname": name}
     else:
         for document in test.find({}, {"_id": 0}):
@@ -111,15 +111,16 @@ def removeMember():
 # if not found, add insert a new document, else update the old one
 @memberAPI.route("/member_add", methods=["POST"])
 def addMember():
-    id = request.args.get('id')
-    name = request.args.get('fullname')
-
-    data = request.args
-
-    query = {"_id": ObjectId(id)} if id else {'fullname':name}
-    queryBy = 'id' if id else 'fullname'
-
-    update = {'$set':{key:value} for key,value in data.items() if key != queryBy}
+    data = request.get_json()
+    assert {'fullname', 'department', 'depart_role', 'project', 'project_role'}.issubset(data.keys()), "Bad request data"
+    query = {"_id": ObjectId(data['_id'])} if '_id' in data else {'fullname': data['fullname']}
+    update = {
+        "$push": {
+            "Department": {'key': data['department'], 'value': data['depart_role']},
+            "Project": {'key': data['project'], 'value': data['project_role']}
+        }
+    }
+    
     member = test.find_one_and_update(query,update,
                                         upsert=True,return_document=ReturnDocument.AFTER)
     member_id = str(member['_id'])
