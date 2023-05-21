@@ -54,53 +54,53 @@ def get():
 # given page number and limit, retrieve within range
 # source of cursor:
 #   https://pymongo.readthedocs.io/en/stable/api/pymongo/cursor.html#pymongo.cursor.Cursor
-@memberAPI.route("/member_range", methods=["GET"])
-def getRange():
-    data = []
-    page_num = int(request.args.get('page'))
-    limit = int(request.args.get('limit'))
-    documents = test.find({}, {"_id": 0}) # type(documents) == cursor
-    for document in documents.skip(page_num * limit).limit(limit):
-        data.append(document)
-    return jsonify(data)
+# @memberAPI.route("/member_range", methods=["GET"])
+# def getRange():
+#     data = []
+#     page_num = int(request.args.get('page'))
+#     limit = int(request.args.get('limit'))
+#     documents = test.find({}, {"_id": 0}) # type(documents) == cursor
+#     for document in documents.skip(page_num * limit).limit(limit):
+#         data.append(document)
+#     return jsonify(data)
 
-# search with filter
-@memberAPI.route("/member_search", methods=["GET"])
-def search():
-    data = []
-    departments = request.args.get('department')
-    projects = request.args.get('project')
+# # search with filter
+# @memberAPI.route("/member_search", methods=["GET"])
+# def search():
+#     data = []
+#     departments = request.args.get('department')
+#     projects = request.args.get('project')
 
-    dept_pairs = departments.split(",")
-    proj_pairs = projects.split(",")
+#     dept_pairs = departments.split(",")
+#     proj_pairs = projects.split(",")
 
-    departments_data = {p.split(":")[0]:p.split(":")[1] for p in dept_pairs}
-    projects_data = {p.split(":")[0]:p.split(":")[1] for p in proj_pairs}
+#     departments_data = {p.split(":")[0]:p.split(":")[1] for p in dept_pairs}
+#     projects_data = {p.split(":")[0]:p.split(":")[1] for p in proj_pairs}
 
-    for dept,role in departments_data.items():
-        document = test.find({"department": dept.upper(),"pos": role.title()}, {"_id": 0})
-        for d in document:
-            if d not in data:
-                data.append(d)
+#     for dept,role in departments_data.items():
+#         document = test.find({"department": dept.upper(),"pos": role.title()}, {"_id": 0})
+#         for d in document:
+#             if d not in data:
+#                 data.append(d)
     
-    for proj,role in projects_data.items():
-        document = test.find({"project_group": proj,"pos_group": role.title()}, {"_id": 0})
-        for d in document:
-            if d not in data:
-                data.append(d)
+#     for proj,role in projects_data.items():
+#         document = test.find({"project_group": proj,"pos_group": role.title()}, {"_id": 0})
+#         for d in document:
+#             if d not in data:
+#                 data.append(d)
     
-    return jsonify(data)
+#     return jsonify(data)
 
 # remove member by fullname
 @memberAPI.route('/member_delete', methods=['DELETE'])
 def removeMember():
-    name = request.args.get('fullname')
-    id = request.args.get('id')
-    if not name and not id:
-        return jsonify({'error': 'Missing fullname or id'}), 400
-    if id:
+    input_data = request.get_json()
+    assert {'fullname', '_id'}.intersection(input_data.keys()), "Bad request data"
+    if '_id' in input_data:
+        id = input_data['_id']
         query = {"_id": ObjectId(id)}
-    if name:
+    else:
+        name = input_data['fullname']
         query = {'fullname': name}
     result = test.delete_one(query)
     if result.deleted_count == 1:
