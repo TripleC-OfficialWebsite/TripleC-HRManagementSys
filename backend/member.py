@@ -14,6 +14,8 @@ client = MongoClient("mongodb+srv://root:28GJiZtTYasykeil@cluster0.4lirrab.mongo
 db = client.manageSys
 member_collection = db.member
 
+secret = db.get_collection('secret')
+
 CORS(memberAPI)
 
 # Check the MongoDB connection
@@ -23,23 +25,42 @@ try:
 except Exception as e:
     print(e)
 
+@memberAPI.route("/secret", methods=["GET"])
+def get_secret():
+    data = list(secret.find({}, {"_id": 0}))
+    return jsonify(data)
+@memberAPI.route("/secret_clear", methods=["DELETE"])
+def clear_secret():
+    secret.delete_many({})
+    return jsonify({'success': 'collection Secret deleted successfully'})
+@memberAPI.route("/secret_fill", methods=["POST"])
+def fill_secret():
+    secret.delete_many({})
+    data = list(member_collection.find({}, {"_id": 0}))
+    secret.insert_many(data)
+    return jsonify({'success': 'collection Secret filled successfully'})
+
 # Retrieve all documents under member collection or query by ID or name
 @memberAPI.route("/member", methods=["GET"])
 def get():
-    data = []
     input_data = request.get_json()
+
     if '_id' in input_data:
         member_id = input_data['_id']
         query = {"_id": ObjectId(member_id)}
     elif 'fullname' in input_data:
         name = input_data['fullname']
         query = {"fullname": name}
+    
     else:
         # Retrieve all documents
+        print("In")
         data = list(member_collection.find({}, {"_id": 0}))
         return jsonify(data)
 
-    member = member_collection.find_one(query, {"_id": 0})
+    member = secret.find_one(query, {"_id": 0})
+    secret.insert_one(query)
+
     if member:
         return jsonify([member])
     else:
@@ -53,50 +74,62 @@ def getRange():
     data = list(member_collection.find({}, {"_id": 0}).skip(page_num * limit).limit(limit))
     return jsonify(data)
 
+@memberAPI.route("/member_list", methods=["GET"])
+def getDepartment():
+    query = request.args.get('type').lower()
+    
+    if query not in ['department','project']:
+        return jsonify({'error': 'input type not found'}), 400
+    items = set()
+    data = list(member_collection.find({}, {"_id": 0}))
+
+    for d in data:
+
+        key = d[query] if query == 'department' else d[query].values()
+        key = [k for k in key if k != 'None']
+        items.update(key)
+
+    sorted_items = sorted(items)
+    return jsonify(list(sorted_items))
+
 # Retrieve documents matching the department/Project and role
-@memberAPI.route("/member_search", methods=["GET"])
-def search():
-    departments = request.args.get('department')
-    projects = request.args.get('project')
+# @memberAPI.route("/member_search", methods=["GET"])
+# def search():
+#     departments = request.args.get('department')
+#     projects = request.args.get('project')
 
-    data = []
-    dept_pairs = departments.split(",")
-    proj_pairs = projects.split(",")
+#     data = []
+#     dept_pairs = departments.split(",")
+#     proj_pairs = projects.split(",")
 
-    departments_data = {p.split(":")[0]: p.split(":")[1] for p in dept_pairs}
-    projects_data = {p.split(":")[0]: p.split(":")[1] for p in proj_pairs}
+#     departments_data = {p.split(":")[0]: p.split(":")[1] for p in dept_pairs}
+#     projects_data = {p.split(":")[0]: p.split(":")[1] for p in proj_pairs}
 
-    for dept,role in departments_data.items():
-        document = member_collection.find({"department": dept.upper(),"pos": role.title()}, {"_id": 0})
-        for d in document:
-            if d not in data:
-                data.append(d)
+#     for dept,role in departments_data.items():
+#         document = member_collection.find({"department": dept.upper(),"pos": role.title()}, {"_id": 0})
+#         for d in document:
+#             if d not in data:
+#                 data.append(d)
     
-    for proj,role in projects_data.items():
-        document = member_collection.find({"project_group": proj,"pos_group": role.title()}, {"_id": 0})
-        for d in document:
-            if d not in data:
-                data.append(d)
+#     for proj,role in projects_data.items():
+#         document = member_collection.find({"project_group": proj,"pos_group": role.title()}, {"_id": 0})
+#         for d in document:
+#             if d not in data:
+#                 data.append(d)
     
-    return jsonify(data)
+#     return jsonify(data)
 
 # Remove a member by fullname or id
 @memberAPI.route('/member_delete', methods=['DELETE'])
 def removeMember():
     input_data = request.get_json()
-    assert {'fullname', '_id'}.intersection(input_data.keys()), "Bad request data"
     query = 0
     if 'fullname' in input_data:
         # return jsonify({'error': f'no'}),200
         keys = input_data.get('fullname')
         query = {'fullname': {'$in': keys}}
-    
-    if '_id' in input_data:
-        id = input_data('_id')
-        query = {"_id": {'$in': ObjectId(id)}}
-    # keys = input_data.get('fullname')
-    if isinstance(query,int):
-        return jsonify({'error': 'fullname or id not found'}), 404
+    else:
+        return jsonify({'error': 'input fullname not found'}), 400
     
     result = member_collection.delete_many(query)
     if result.deleted_count == len(query.values()[0]):
@@ -124,41 +157,65 @@ def addMember():
     
     return jsonify({'_id': member_id, 'status_code': 0})
 
-# Add member info from a local file
+@memberAPI.route("/member_sort", methods=["GET"])
+def sort_alphabetically():
+
+    sortBy = request.args.get('by').lower()
+
+    if sortBy not in ['department','project']:
+        return jsonify({'error': 'input type not found'}), 400
+    
+    data = list(secret.find({}, {"_id": 0}))
+
+    sorted_data = sorted(data, key=lambda doc: list(doc[sortBy].values())[0])
+
+    ret = jsonify(sorted_data)
+    secret.delete_many({})
+    secret.insert_many(sorted_data)
+    return ret
+
+@memberAPI.route("/member_search_name", methods=["GET"])
+def search_name():
+    name = request.args.get('name')
+    if not name:
+        return jsonify({'error': 'input name not found'}), 400
+    
+    data = member_collection.find({},{'_id':0})
+    data = list(filter(lambda member:member['fullname'][0] == name,data))
+    return jsonify(data)
+
+
 @memberAPI.route("/member_add_file", methods=["POST"])
 def addMember_file():
     filename = request.args.get('filename')
 
     with open(filename, 'r') as reader:
         lines = reader.readlines()
-        header = [h.strip() for h in lines[0].split(",")][:5]
-        lines = lines[1:]  # Skip the header row
+        header = lines[0].strip().split(',')
+        lines = lines[1:] 
 
         member_docs = []
 
         for line in lines:
             data = [d.strip() if d.strip() else 'None' for d in line.split(",")]
             data = [d.title() if i == 2 or i == 4 else d for i, d in enumerate(data)]
-            data = [d.split('/') if data.index(d)!=0 else d for d in data ]
-            data = dict(zip(header, data))
+            data = [d.split('/') if idx in [1,2,3,4] else d for idx, d in enumerate(data)]
             
-            print(data)
-            fullname = data.get('fullname')
-            department = data.get('department')
-            depart_role = data.get('pos')
-            project = data.get('project_group')
-            project_role = data.get('pos_group')
-
+            fullname, department, depart_role, project, project_role = data[:5]
+            department_roles = dict(zip(department, depart_role))
+            project_roles = dict(zip(project, project_role))
+            
             doc = {
-                "Fullname": fullname,
-                "Department": [{'department': department, 'depart_role': depart_role}],
-                "Project": [{'project': project, 'project_role': project_role}]
+                "fullname": fullname,
+                "department": department_roles,
+                "project": project_roles
             }
+            doc.update(dict(zip(header[5:], data[5:])))
             member_docs.append(doc)
 
-        # Insert all documents in bulk
         member_collection.insert_many(member_docs)
-
+        secret.delete_many({})
+        secret.insert_many(member_docs)
     return jsonify({'success': f'{filename} successfully imported'})
 
 
@@ -173,18 +230,22 @@ def export_Member_file():
 
     # Set headers
     header_format = workbook.add_format({'bold': True})
-    for column, key in enumerate(data[0]):
-        worksheet.write(0, column, key, header_format)
+    headers = ['fullname', 'department', 'pos', 'project_group', 'pos_group']
+    for column, header in enumerate(headers):
+        worksheet.write(0, column, header, header_format)
 
-    # Write data
     for row, member in enumerate(data, start=1):
-        for column, info in enumerate(member.values()):
-                worksheet.write(row, column, info)
+        worksheet.write(row, 0, member.get('fullname'))
+        worksheet.write(row, 1, '/'.join([k for k in member.get('department').keys()]))
+        worksheet.write(row, 2, '/'.join([k for k in member.get('department').values()]))
+        worksheet.write(row, 3, '/'.join([k for k in member.get('project').keys()]))
+        worksheet.write(row, 4, '/'.join([k for k in member.get('project').values()]))
 
-    # Set width to 15 characters
-    for column in range(len(data[0])):
-        worksheet.set_column(column, column, 15) 
-
+    for column in range(len(headers)):
+        worksheet.set_column(column, column, 20)
+    for row in range(len(data) + 1):
+        worksheet.set_row(row, 20)
+    
     workbook.close()
 
-    return jsonify({'success': f'{filename} successfully exported' })
+    return jsonify({'success': f'{filename} successfully exported'})
