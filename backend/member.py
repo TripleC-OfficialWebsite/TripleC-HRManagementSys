@@ -32,54 +32,44 @@ def get_secret():
 @memberAPI.route("/secret_clear", methods=["DELETE"])
 def clear_secret():
     secret.delete_many({})
-    return jsonify({'success': 'collection Secret deleted successfully'})
+    return jsonify({'success': 'Collection Secret deleted successfully'})
 @memberAPI.route("/secret_fill", methods=["POST"])
 def fill_secret():
     secret.delete_many({})
     data = list(member_collection.find({}, {"_id": 0}))
     secret.insert_many(data)
-    return jsonify({'success': 'collection Secret filled successfully'})
+    return jsonify({'success': 'Collection Secret filled successfully'})
 
-# Retrieve all documents under member collection or query by ID or name
-@memberAPI.route("/member", methods=["GET"])
-def get():
-    input_data = request.get_json()
+@memberAPI.route("/member", defaults={'fullname': None}, methods=["GET"])
+@memberAPI.route("/member/<string:fullname>", methods=["GET"])
+def get(fullname):
+    if fullname:
+        query = {"fullname": fullname}
+        member = member_collection.find_one(query, {"_id": 0})
 
-    if '_id' in input_data:
-        member_id = input_data['_id']
-        query = {"_id": ObjectId(member_id)}
-    elif 'fullname' in input_data:
-        name = input_data['fullname']
-        query = {"fullname": name}
-    
+        if member:
+            return jsonify([member])
+        
+        return jsonify({'error': f'Member {fullname} not found'}), 404
     else:
-        # Retrieve all documents
-        print("In")
         data = list(member_collection.find({}, {"_id": 0}))
         return jsonify(data)
 
-    member = secret.find_one(query, {"_id": 0})
-    secret.insert_one(query)
-
-    if member:
-        return jsonify([member])
-    else:
-        return jsonify({'error': f'Member {query} not found'}), 404
 
 # Retrieve documents within the specified range
 @memberAPI.route("/member_range", methods=["GET"])
-def getRange():
+def get_range():
     page_num = int(request.args.get('page'))
     limit = int(request.args.get('limit'))
     data = list(member_collection.find({}, {"_id": 0}).skip(page_num * limit).limit(limit))
     return jsonify(data)
 
 @memberAPI.route("/member_list", methods=["GET"])
-def getDepartment():
+def get_department():
     query = request.args.get('type').lower()
     
     if query not in ['department','project']:
-        return jsonify({'error': 'input type not found'}), 400
+        return jsonify({'error': 'Input type not found'}), 400
     items = set()
     data = list(member_collection.find({}, {"_id": 0}))
 
@@ -120,26 +110,24 @@ def getDepartment():
 #     return jsonify(data)
 
 # Remove a member by fullname or id
-@memberAPI.route('/member_delete', methods=['DELETE'])
-def removeMember():
-    input_data = request.get_json()
-    query = 0
-    if 'fullname' in input_data:
-        # return jsonify({'error': f'no'}),200
-        keys = input_data.get('fullname')
-        query = {'fullname': {'$in': keys}}
-    else:
-        return jsonify({'error': 'input fullname not found'}), 400
+
+@memberAPI.route('/member_delete/<string:fullname>', methods=['DELETE'])
+def remove_member(fullname):
+    if not fullname:
+        return jsonify({'error': 'Input fullname not found'}), 400
     
-    result = member_collection.delete_many(query)
-    if result.deleted_count == len(query.values()[0]):
-        return jsonify({'success': f'Member {query} deleted successfully'}), 200
-    else:
-        return jsonify({'error': f'Member {query} not found'}), 404
+    query = {'fullname': fullname}
+    result = member_collection.delete_one(query)
+    delete_secret = secret.delete_one(query)
+    
+    if result.deleted_count == 1:
+        return jsonify({'success': f'Member {fullname} deleted successfully'}), 200
+
+    return jsonify({'error': f'Member {fullname} not found'}), 404
     
  # If the member is not found, insert a new document; otherwise, update the existing one
 @memberAPI.route("/member_add", methods=["POST"])
-def addMember():
+def add_member():
     data = request.get_json()
     # member_id = data.get('id')
     fullname = data['fullname']
@@ -226,7 +214,7 @@ def export_Member_file():
     workbook = xlsxwriter.Workbook(filename)
     worksheet = workbook.add_worksheet()
 
-    data = list(member_collection.find({}, {"_id": 0}))
+    data = list(secret.find({}, {"_id": 0}))
 
     # Set headers
     header_format = workbook.add_format({'bold': True})

@@ -88,9 +88,9 @@ def collection_clear():
         return jsonify({'error': 'Invalid Collection Name'}), 401
     else:
         if collections[collection_name].count_documents({}) == 0:
-            return jsonify({'success': f'collection {collection_name} already cleared'})
+            return jsonify({'success': f'Collection {collection_name} already cleared'})
         collections[collection_name]. delete_many({})
-        return jsonify({'success': f'collection {collection_name} cleared successfully'})
+        return jsonify({'success': f'Collection {collection_name} cleared successfully'})
 
 
 
