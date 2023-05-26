@@ -39,7 +39,11 @@ def fill_secret():
     data = list(member_collection.find({}, {"_id": 0}))
     secret.insert_many(data)
     return jsonify({'success': 'Collection Secret filled successfully'})
-
+def update_secret_ret_data(data):
+    ret = jsonify(data)
+    clear_secret()
+    secret.insert_many(data)
+    return ret
 
 @memberAPI.route("/member", defaults={'fullname': None}, methods=["GET"])
 @memberAPI.route("/member/<string:fullname>", methods=["GET"])
@@ -63,13 +67,10 @@ def get_range(page_num, limit):
     if page_num < 0 or limit < 0:
         return jsonify({'error': f'Invalid input'}), 400
     data = list(member_collection.find({}, {"_id": 0}).skip(page_num * limit).limit(limit))
-    ret = jsonify(data)
-    clear_secret()
-    secret.insert_many(data)
-    return ret
+    return update_secret_ret_data(data)
 
 @memberAPI.route("/member_list", methods=["GET"])
-def get_department():
+def get_all_department_or_project():
     query = request.args.get('type').lower()
     if query not in ['department','project']:
         return jsonify({'error': 'Invalid type (please enter \'department\' or \'project\')'}), 400
@@ -148,11 +149,11 @@ def add_member():
 @memberAPI.route("/member_sort/<string:type>&<string:order>", methods=["GET"])
 def sort_alphabetically(type,order):
     ascending = True
-    if order not in ['ascending','descending']:
+    sortBy = order.lower()
+    if sortBy not in ['ascending','descending']:
         ascending = True
     else:
-        ascending = order == 'ascending'
-    sortBy = type.lower()
+        ascending = sortBy == 'ascending'
 
     if sortBy not in ['department','project']:
         return jsonify({'error': 'Missing input type'}), 400
@@ -162,10 +163,7 @@ def sort_alphabetically(type,order):
     sorted_data = sorted(data, key=lambda doc: list(doc[sortBy].values())[0])
     if not ascending:
         sorted_data.reverse()
-    ret = jsonify(sorted_data)
-    clear_secret()
-    secret.insert_many(sorted_data)
-    return ret
+    return update_secret_ret_data(sorted_data)
 
 @memberAPI.route("/member_search_name", methods=["GET"])
 def search_name():
@@ -173,9 +171,10 @@ def search_name():
     if name is None:
         return jsonify({'error': 'Missing input name'}), 400
     
-    data = member_collection.find({},{'_id':0})
+    data = secret.find({},{'_id':0})
     data = list(filter(lambda member:member['fullname'][0] == name,data))
-    return jsonify(data)
+    
+    return update_secret_ret_data(data)
 
 
 @memberAPI.route("/member_add_file", methods=["POST"])
@@ -209,8 +208,7 @@ def addMember_file():
             member_docs.append(doc)
 
         member_collection.insert_many(member_docs)
-        clear_secret()
-        secret.insert_many(member_docs)
+        update_secret_ret_data(data)
     return jsonify({'success': f'{filename} successfully imported'})
 
 
