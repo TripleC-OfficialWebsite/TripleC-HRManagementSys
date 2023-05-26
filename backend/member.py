@@ -152,7 +152,7 @@ def sort_alphabetically(type,order):
         ascending = True
     else:
         ascending = order == 'ascending'
-    sortBy = request.args.get('by').lower()
+    sortBy = type.lower()
 
     if sortBy not in ['department','project']:
         return jsonify({'error': 'Missing input type'}), 400
