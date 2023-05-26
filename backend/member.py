@@ -35,15 +35,11 @@ def clear_secret():
     return jsonify({'success': 'Collection Secret deleted successfully'})
 @memberAPI.route("/secret_fill", methods=["POST"])
 def fill_secret():
-    secret.delete_many({})
+    clear_secret()
     data = list(member_collection.find({}, {"_id": 0}))
     secret.insert_many(data)
     return jsonify({'success': 'Collection Secret filled successfully'})
 
-@memberAPI.route("/secret_range/<int:page_num>&<int:limit>", methods=["GET"])
-def secret_range(page_num, limit):
-    data = list(secret.find({}, {"_id": 0}).skip(page_num * limit).limit(limit))
-    return jsonify(data)
 
 @memberAPI.route("/member", defaults={'fullname': None}, methods=["GET"])
 @memberAPI.route("/member/<string:fullname>", methods=["GET"])
@@ -61,25 +57,26 @@ def get(fullname):
         return jsonify(data)
 
 
-# # Retrieve documents within the specified range
-# @memberAPI.route("/member_range", methods=["GET"])
-# def get_range():
-#     page_num = int(request.args.get('page'))
-#     limit = int(request.args.get('limit'))
-#     data = list(member_collection.find({}, {"_id": 0}).skip(page_num * limit).limit(limit))
-#     return jsonify(data)
+# Retrieve documents within the specified range
+@memberAPI.route("/member_range/<int:page_num>&<int:limit>", methods=["GET"])
+def get_range(page_num, limit):
+    if page_num < 0 or limit < 0:
+        return jsonify({'error': f'Invalid input'}), 400
+    data = list(member_collection.find({}, {"_id": 0}).skip(page_num * limit).limit(limit))
+    ret = jsonify(data)
+    clear_secret()
+    secret.insert_many(data)
+    return ret
 
 @memberAPI.route("/member_list", methods=["GET"])
 def get_department():
     query = request.args.get('type').lower()
-    
     if query not in ['department','project']:
-        return jsonify({'error': 'Input type not found'}), 400
+        return jsonify({'error': 'Invalid type (please enter \'department\' or \'project\')'}), 400
     items = set()
     data = list(member_collection.find({}, {"_id": 0}))
 
     for d in data:
-
         key = d[query] if query == 'department' else d[query].values()
         key = [k for k in key if k != 'None']
         items.update(key)
@@ -118,13 +115,13 @@ def get_department():
 
 @memberAPI.route('/member_delete/<string:fullname>', methods=['DELETE'])
 def remove_member(fullname):
-    if not fullname:
-        return jsonify({'error': 'Input fullname not found'}), 400
+    if fullname is None:
+        return jsonify({'error': 'Missing input fullname'}), 400
     
     query = {'fullname': fullname}
     result = member_collection.delete_one(query)
     delete_secret = secret.delete_one(query)
-    
+    assert delete_secret == 1
     if result.deleted_count == 1:
         return jsonify({'success': f'Member {fullname} deleted successfully'}), 200
 
@@ -134,44 +131,47 @@ def remove_member(fullname):
 @memberAPI.route("/member_add", methods=["POST"])
 def add_member():
     data = request.get_json()
-    # member_id = data.get('id')
     fullname = data['fullname']
-
-    # data = request.args
-
+    if fullname is None:
+        return jsonify({'error': 'Missing member fullname'}), 400
     query = {'fullname': fullname}
-    # queryBy = 'id' if member_id else 'fullname'
-    # data = {key:''.join(data[key]) if key == 'fullname' else data[key].split(',') for key in data.keys()}
+    update = {'$set': {key: value for key, value in data.items() if key != 'fullname'}}
 
-    update = update = {'$set': {key: value for key, value in data.items() if key != 'fullname'}}
-
-    member = member_collection.find_one_and_update(query, update, upsert=True, return_document=ReturnDocument.AFTER)
+    member = member_collection.find_one_and_update(query, update, upsert=True, \
+                                                   return_document=ReturnDocument.AFTER)
+    secret.find_one_and_update(query, update, upsert=True, \
+                                                   return_document=ReturnDocument.AFTER)
     member_id = str(member['_id'])
 
     return jsonify({'_id': member_id, 'status_code': 0})
 
-@memberAPI.route("/member_sort", methods=["GET"])
-def sort_alphabetically():
-
+@memberAPI.route("/member_sort/<string:type>&<string:order>", methods=["GET"])
+def sort_alphabetically(type,order):
+    ascending = True
+    if order not in ['ascending','descending']:
+        ascending = True
+    else:
+        ascending = order == 'ascending'
     sortBy = request.args.get('by').lower()
 
     if sortBy not in ['department','project']:
-        return jsonify({'error': 'input type not found'}), 400
+        return jsonify({'error': 'Missing input type'}), 400
     
     data = list(secret.find({}, {"_id": 0}))
 
     sorted_data = sorted(data, key=lambda doc: list(doc[sortBy].values())[0])
-
+    if not ascending:
+        sorted_data.reverse()
     ret = jsonify(sorted_data)
-    secret.delete_many({})
+    clear_secret()
     secret.insert_many(sorted_data)
     return ret
 
 @memberAPI.route("/member_search_name", methods=["GET"])
 def search_name():
     name = request.args.get('name')
-    if not name:
-        return jsonify({'error': 'input name not found'}), 400
+    if name is None:
+        return jsonify({'error': 'Missing input name'}), 400
     
     data = member_collection.find({},{'_id':0})
     data = list(filter(lambda member:member['fullname'][0] == name,data))
@@ -182,6 +182,8 @@ def search_name():
 def addMember_file():
     filename = request.args.get('filename')
 
+    if filename is None:
+        return jsonify({'error': 'Missing input filename'}), 400
     with open(filename, 'r') as reader:
         lines = reader.readlines()
         header = lines[0].strip().split(',')
@@ -207,7 +209,7 @@ def addMember_file():
             member_docs.append(doc)
 
         member_collection.insert_many(member_docs)
-        secret.delete_many({})
+        clear_secret()
         secret.insert_many(member_docs)
     return jsonify({'success': f'{filename} successfully imported'})
 
