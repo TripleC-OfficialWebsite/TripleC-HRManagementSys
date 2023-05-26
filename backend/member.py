@@ -40,6 +40,8 @@ def fill_secret():
     secret.insert_many(data)
     return jsonify({'success': 'Collection Secret filled successfully'})
 def update_secret_ret_data(data):
+    if len(data) == 0:
+        return jsonify([])
     ret = jsonify(data)
     clear_secret()
     secret.insert_many(data)
@@ -122,8 +124,9 @@ def remove_member(fullname):
     query = {'fullname': fullname}
     result = member_collection.delete_one(query)
     delete_secret = secret.delete_one(query)
-    assert delete_secret == 1
+    
     if result.deleted_count == 1:
+        assert delete_secret == 1
         return jsonify({'success': f'Member {fullname} deleted successfully'}), 200
 
     return jsonify({'error': f'Member {fullname} not found'}), 404
@@ -149,7 +152,7 @@ def add_member():
 @memberAPI.route("/member_sort/<string:type>&<string:order>", methods=["GET"])
 def sort_alphabetically(type,order):
     ascending = True
-    sortBy = order.lower()
+    sortBy = type.lower()
     if sortBy not in ['ascending','descending']:
         ascending = True
     else:
@@ -178,7 +181,7 @@ def search_name():
 
 
 @memberAPI.route("/member_add_file", methods=["POST"])
-def addMember_file():
+def add_member_file():
     filename = request.args.get('filename')
 
     if filename is None:
@@ -208,7 +211,8 @@ def addMember_file():
             member_docs.append(doc)
 
         member_collection.insert_many(member_docs)
-        update_secret_ret_data(data)
+        clear_secret()
+        secret.insert_many(member_docs)
     return jsonify({'success': f'{filename} successfully imported'})
 
 
