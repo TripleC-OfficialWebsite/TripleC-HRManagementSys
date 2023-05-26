@@ -40,6 +40,11 @@ def fill_secret():
     secret.insert_many(data)
     return jsonify({'success': 'Collection Secret filled successfully'})
 
+@memberAPI.route("/secret_range/<int:page_num>&<int:limit>", methods=["GET"])
+def secret_range(page_num, limit):
+    data = list(secret.find({}, {"_id": 0}).skip(page_num * limit).limit(limit))
+    return jsonify(data)
+
 @memberAPI.route("/member", defaults={'fullname': None}, methods=["GET"])
 @memberAPI.route("/member/<string:fullname>", methods=["GET"])
 def get(fullname):
@@ -56,13 +61,13 @@ def get(fullname):
         return jsonify(data)
 
 
-# Retrieve documents within the specified range
-@memberAPI.route("/member_range", methods=["GET"])
-def get_range():
-    page_num = int(request.args.get('page'))
-    limit = int(request.args.get('limit'))
-    data = list(member_collection.find({}, {"_id": 0}).skip(page_num * limit).limit(limit))
-    return jsonify(data)
+# # Retrieve documents within the specified range
+# @memberAPI.route("/member_range", methods=["GET"])
+# def get_range():
+#     page_num = int(request.args.get('page'))
+#     limit = int(request.args.get('limit'))
+#     data = list(member_collection.find({}, {"_id": 0}).skip(page_num * limit).limit(limit))
+#     return jsonify(data)
 
 @memberAPI.route("/member_list", methods=["GET"])
 def get_department():
@@ -136,13 +141,13 @@ def add_member():
 
     query = {'fullname': fullname}
     # queryBy = 'id' if member_id else 'fullname'
-    data = {key:''.join(data[key]) if key == 'fullname' else data[key].split(',') for key in data.keys()}
+    # data = {key:''.join(data[key]) if key == 'fullname' else data[key].split(',') for key in data.keys()}
 
-    update = {'$set': {key: value} for key, value in data.items() if key != 'fullname'}
+    update = update = {'$set': {key: value for key, value in data.items() if key != 'fullname'}}
 
     member = member_collection.find_one_and_update(query, update, upsert=True, return_document=ReturnDocument.AFTER)
     member_id = str(member['_id'])
-    
+
     return jsonify({'_id': member_id, 'status_code': 0})
 
 @memberAPI.route("/member_sort", methods=["GET"])
