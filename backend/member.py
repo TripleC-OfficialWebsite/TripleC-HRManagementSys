@@ -64,13 +64,13 @@ def get(fullname):
         return jsonify(data)
 
 
-# # Retrieve documents within the specified range
-@memberAPI.route("/member_range", methods=["GET"])
-def get_range():
-    page_num = int(request.args.get('page'))
-    limit = int(request.args.get('limit'))
+# Retrieve documents within the specified range
+@memberAPI.route("/member_range/<int:page_num>&<int:limit>", methods=["GET"])
+def get_range(page_num, limit):
+    if page_num < 0 or limit < 0:
+        return jsonify({'error': f'Invalid input'}), 400
     data = list(member_collection.find({}, {"_id": 0}).skip(page_num * limit).limit(limit))
-    return jsonify(data)
+    return update_secret_ret_data(data)
 
 @memberAPI.route("/member_list/<string:type>", methods=["GET"])
 def get_all_department_or_project(type):
