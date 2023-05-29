@@ -13,13 +13,13 @@ function App() {
   const router = createHashRouter(
     createRoutesFromElements(
       <Route>
-        <Route path="/add" element={<LogIn />} />
+        <Route path="/" element={<LogIn />} />
         <Route path="/manage" element={<Manage />} />
-        <Route path="/" element={<Add />} />
+        <Route path="/add" element={<Add />} />
       </Route>
     )
   );
-
+  
   return (
     <div className="App">
       <RouterProvider router={router} />

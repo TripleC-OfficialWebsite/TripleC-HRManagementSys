@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Add = () => {
-  const [fullName, setFullName] = useState('');
+  const navigate = useNavigate();
+
+  const [fullname, setFullName] = useState('');
   const [department, setDepartment] = useState('');
   const [departmentPosition, setDepartmentPosition] = useState('');
   const [projectGroup, setProjectGroup] = useState('');
@@ -37,7 +40,7 @@ const Add = () => {
 
     // Create an object with the parsed values
     const data = {
-      fullName,
+      fullname,
       department: departmentArray,
       departmentPosition: departmentPositionArray,
       projectGroup: projectGroupArray,
@@ -67,6 +70,30 @@ const Add = () => {
     setLinkedin('');
     setGithub('');
     setPhoto(null);
+
+    // add the input data to backend
+    addToBackend(data);
+  };
+
+  const addToBackend = async (data) => {
+    const response = await fetch(`http://127.0.0.1:5000/mem/member_add`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    try {
+      if (!response.ok) {
+        alert(result.error);
+      } else {
+        console.log(result);
+        navigate('/manage');
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handlePhotoUpload = (e) => {
@@ -80,7 +107,7 @@ const Add = () => {
       <form onSubmit={handleFormSubmit}>
         <div className="fullName">
           <label htmlFor="fullName">Full Name:</label>
-          <input type="text" id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+          <input type="text" id="fullName" value={fullname} onChange={(e) => setFullName(e.target.value)} required />
         </div>
         <div className="department">
           <label htmlFor="department">Department:</label>

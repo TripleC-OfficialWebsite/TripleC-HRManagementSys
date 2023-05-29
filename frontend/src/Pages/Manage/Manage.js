@@ -17,7 +17,6 @@ const Manage = () => {
 
     const data = await response.json();
     console.log(data);
-    console.log("123");
     const ids = data.map((member) => member._id);
     const names = data.map((member) => member.fullname);
 
