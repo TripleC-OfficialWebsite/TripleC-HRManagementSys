@@ -1,4 +1,4 @@
-fullname,department,pos,project_group,pos_group,grade,email,wechat,enroll_time,linkedin,github
+Fullname,Department,Position,Project,Role,Grade,Email,Wechat,Enroll Time,Linkedin,Github
 Daniel Cao,SWE,Tech Chair,Label,Frontend Developer,4th year,z4cao@ucsd.edu,cg5037816657,2021 Fall,https://www.linkedin.com/in/zeyu-cao/,https://github.com/Daniel-1-Cao
 Xingchen Li,President,President,Label,Business Development,4th year,xil082@ucsd.edu,lee423965,2021 Fall,https://www.linkedin.com/in/xingchenlijay/,
 Shuhang Xu,VP,External Vice President,,,4th year,shx012@ucsd.edu,greatShuhang,2021 Fall,https://www.linkedin.com/in/shuhang-xu-1805821a5/,https://github.com/ShuhangXu?tab=repositories
@@ -55,8 +55,7 @@ Shuyi Han,PD,member,MapSocial,Product Designer ,3rd,shh020@ucsd.edu,cici99213,20
 Yucheng Huang,SWE,member,MapSocial,Tech Lead,4th,yuchengh0629@gmail.com,hycwx416,2022 Fall,,
 Alex Liu,SWE,member,MapSocial,backend,3rd,yliu2911@gmail.com,jeffMa2344,2023 Winter,,
 Hao Wang,PD,member,MapSocial,Product Designer ,4th,haw044@ucsd.edu,zimbabwe,2023 Winter,,
-Rain Dong,PD,Member,MapSocial,Product Designer ,2nd,h6dong@ucsd.edu,dhy8608DHY,2023 Winter,"www.linkedin.com/in/raindong
-",
+Rain Dong,PD,Member,MapSocial,Product Designer ,2nd,h6dong@ucsd.edu,dhy8608DHY,2023 Winter,https://www.linkedin.com/in/raindong,
 Yingqi Cao,SWE,member,MapSocial,backend,3rd,yic033@ucsd.edu,IOEDDk,2022 Fall,,
 Yijun Luo,SWE,member,MapSocial,front end,2nd,yil176@ucsd.edu,CaptainJackkkkkkkk,2022 Fall,,
 Lynne Jiang,PM,member,MapSocial,Product Mangement,3rd,LynneJianggg@gmail.com,Lynne_1717,2023 Winter,,

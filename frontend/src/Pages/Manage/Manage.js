@@ -1,30 +1,43 @@
-import { useEffect } from 'react';
-import { useState } from "react"
+import { useState, useEffect } from "react";
+
 const Manage = () => {
-  const [id, setId] = useState("")
-  const [fullname, setFullname] = useState("");
-  const [allmembers, setAllmembers] = useState([]);
-  useEffect(() => {
-    const FetchMember = async (e) => {
-      e.preventDefault();
-      let base = "http://127.0.0.1:5000/member";
-      const response = await fetch (base, {
-        method:"GET",
+  const [memberIds, setMemberIds] = useState([]);
+  const [memberNames, setMemberNames] = useState([]);
+
+  const fetchMembers = async () => {
+    const response = await fetch(
+      `http://127.0.0.1:5000/mem/member_range/0&10`,
+      {
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
-      });
-      const result = await response.json();
-      if (!response.ok) {
-        alert(result.error);
-      } else {
-        setAllmembers(result)  
       }
-    }; 
-  }),[];
+    );
+
+    const data = await response.json();
+    console.log(data);
+    console.log("123");
+    const ids = data.map((member) => member._id);
+    const names = data.map((member) => member.fullname);
+
+    setMemberIds(ids);
+    setMemberNames(names);
+  };
+
+  useEffect(() => {
+    fetchMembers();
+  }, []);
+
   return (
     <div>
       <h1>Manage</h1>
+      {memberIds.map((id, index) => (
+        <div key={id}>
+          <p>ID: {id}</p>
+          <p>Name: {memberNames[index]}</p>
+        </div>
+      ))}
     </div>
   );
 };
