@@ -6,7 +6,7 @@ const Manage = () => {
 
   const fetchMembers = async () => {
     const response = await fetch(
-      `http://127.0.0.1:5000/member_range?page=0&limit=10`,
+      `http://127.0.0.1:5000/mem/member_range/0&10`,
       {
         method: "GET",
         headers: {

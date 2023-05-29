@@ -7,10 +7,11 @@ import xlsxwriter
 
 
 
-memberAPI = Blueprint('member_api', __name__)
+memberAPI = Blueprint('member_api', __name__, url_prefix='/mem')
 
 # Create a new client and connect to the server
-client = MongoClient("mongodb+srv://root:28GJiZtTYasykeil@cluster0.4lirrab.mongodb.net/?retryWrites=true&w=majority")
+client = MongoClient("mongodb+srv://root:28GJiZtTYasykeil@cluster0.4lirrab.mongodb.net/?retryWrites=true&w=majority", tls=True,
+                             tlsAllowInvalidCertificates=True)
 db = client.manageSys
 member_collection = db.member
 
@@ -63,13 +64,13 @@ def get(fullname):
         return jsonify(data)
 
 
-# Retrieve documents within the specified range
-@memberAPI.route("/member_range/<int:page_num>&<int:limit>", methods=["GET"])
-def get_range(page_num, limit):
-    if page_num < 0 or limit < 0:
-        return jsonify({'error': f'Invalid input'}), 400
+# # Retrieve documents within the specified range
+@memberAPI.route("/member_range", methods=["GET"])
+def get_range():
+    page_num = int(request.args.get('page'))
+    limit = int(request.args.get('limit'))
     data = list(member_collection.find({}, {"_id": 0}).skip(page_num * limit).limit(limit))
-    return update_secret_ret_data(data)
+    return jsonify(data)
 
 @memberAPI.route("/member_list", methods=["GET"])
 def get_all_department_or_project():
