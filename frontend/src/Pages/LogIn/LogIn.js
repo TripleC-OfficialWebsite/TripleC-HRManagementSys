@@ -26,11 +26,7 @@ const LogIn = () => {
 
   const validateUser = async (e) => {
     e.preventDefault();
-<<<<<<< HEAD
-    let base = "http://127.0.0.1:5000/validate";
-=======
     let base = "http://127.0.0.1:5000/admin/admin_validate";
->>>>>>> be9575f10fa0ba7756c740e9c7e7a1da61e419fd
     base += `?username=${userInfo.username}&password=${userInfo.password}`;
 
     const response = await fetch(base, {
