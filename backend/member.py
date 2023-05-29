@@ -69,7 +69,7 @@ def get(fullname):
 def get_range(page_num, limit):
     if page_num < 0 or limit < 0:
         return jsonify({'error': f'Invalid input'}), 400
-    data = list(member_collection.find({}, {"_id": 0}).skip(page_num * limit).limit(limit))
+    data = list(secret.find({}, {"_id": 0}).skip(page_num * limit).limit(limit))
     return update_secret_ret_data(data)
 
 @memberAPI.route("/member_list/<string:type>", methods=["GET"])
@@ -81,7 +81,7 @@ def get_all_department_or_project(type):
     data = list(member_collection.find({}, {"_id": 0}))
 
     for d in data:
-        key = d[query] if query == 'department' else d[query].values()
+        key = d[query] if query == 'department' else d['project']
         key = [k for k in key if k != 'None']
         items.update(key)
 
@@ -100,7 +100,7 @@ def remove_member(fullname):
     delete_secret = secret.delete_one(query)
     
     if result.deleted_count == 1:
-        assert delete_secret == 1
+        assert delete_secret.deleted_count == 1
         return jsonify({'success': f'Member {fullname} deleted successfully'}), 200
 
     return jsonify({'error': f'Member {fullname} not found'}), 404
@@ -123,23 +123,36 @@ def add_member():
 
     return jsonify({'_id': member_id, 'status_code': 0})
 
+
+@memberAPI.route("/member_filter/<departments>", defaults = {'projects': None}, methods=["GET"])
 @memberAPI.route("/member_filter/<departments>/<projects>", methods=["GET"])
 def filter_by(departments, projects):
 
-    if not departments or not projects:
+    if not departments and not projects:
         return jsonify({'error': 'Missing input departments or projects'}), 400
 
-    dept_pairs = departments.split(",")
-    proj_pairs = projects.split(",")
-
-    query = {
-        "$or": [
-            {"department." + dept: {"$exists": True}} for dept in dept_pairs
-        ],
-        "$or": [
-            {"project." + proj: {"$exists": True}} for proj in proj_pairs
-        ]
-    }
+    query = {}
+    
+    if departments and not projects:
+        dept_pairs = departments.split(",")
+        query.update({
+            "$or": [
+                {"department." + dept: {"$exists": True}} for dept in dept_pairs
+            ]
+        })
+    
+    if projects and departments:
+        dept_pairs = departments.split(",")
+        proj_pairs = projects.split(",")
+            
+        query.update({
+            "$or": [
+                {"department." + dept: {"$exists": True}} for dept in dept_pairs
+            ],
+            "$or": [
+                {"project." + proj: {"$exists": True}} for proj in proj_pairs
+            ]
+        })
 
     documents = secret.find(query, {"_id": 0})
     data = list(documents)
@@ -149,6 +162,8 @@ def filter_by(departments, projects):
 
 @memberAPI.route("/member_sort/<string:type>&<string:order>", methods=["GET"])
 def sort_alphabetically(type,order):
+    rank = ['President','VP','PM','SWE','DSC','PD','HR','BD','VIS','PR','OP']
+
     if order is None:
         ascending = True
     else:
@@ -159,21 +174,25 @@ def sort_alphabetically(type,order):
         return jsonify({'error': 'Missing input type'}), 400
     
     data = list(secret.find({}, {"_id": 0}))
+    if sortBy == 'department':
+        dept = [(list(d[sortBy])[0],d) for d in data]
+        
+        dept_rank = [rank.index(d[0]) for d in dept]
 
-    sorted_data = sorted(data, key=lambda doc: list(doc[sortBy].values())[0])
-    if not ascending:
+        sorted_data = [x[1] for _,x in sorted(zip(dept_rank,dept),key=lambda pair: pair[0])]
+    else:
+        sorted_data = sorted(data, key=lambda d:list(d[sortBy])[0])[::-1]
+
+    if ascending:
         sorted_data.reverse()
+
     return update_secret_ret_data(sorted_data)
 
 @memberAPI.route("/member_search_name/<string:letter>", methods=["GET"])
 def search_name(letter):
-    print(letter)
     if letter is None:
         return jsonify({'error': 'Missing input name'}), 400
-    
-    data = secret.find({},{'_id':0})
-    data = list(filter(lambda member:member['fullname'][0] == letter,data))
-    
+    data = list(secret.find( { 'fullname': { '$regex': f'^(?i){letter}(?-i).*' } }, {'_id': 0} ))
     return update_secret_ret_data(data)
 
 
@@ -214,32 +233,32 @@ def add_member_file():
 
 
 
-# @memberAPI.route("/member_export", methods=["GET"])
-# def export_Member_file():
-#     filename = 'Members.xlsx'
-#     workbook = xlsxwriter.Workbook(filename)
-#     worksheet = workbook.add_worksheet()
+@memberAPI.route("/member_export", methods=["GET"])
+def export_Member_file():
+    filename = 'Members.xlsx'
+    workbook = xlsxwriter.Workbook(filename)
+    worksheet = workbook.add_worksheet()
 
-#     data = list(secret.find({}, {"_id": 0}))
+    data = list(secret.find({}, {"_id": 0}))
 
-#     # Set headers
-#     header_format = workbook.add_format({'bold': True})
-#     headers = ['fullname', 'department', 'pos', 'project_group', 'pos_group']
-#     for column, header in enumerate(headers):
-#         worksheet.write(0, column, header, header_format)
+    # Set headers
+    header_format = workbook.add_format({'bold': True})
+    headers = ['fullname', 'department', 'pos', 'project_group', 'pos_group']
+    for column, header in enumerate(headers):
+        worksheet.write(0, column, header, header_format)
 
-#     for row, member in enumerate(data, start=1):
-#         worksheet.write(row, 0, member.get('fullname'))
-#         worksheet.write(row, 1, '/'.join([k for k in member.get('department').keys()]))
-#         worksheet.write(row, 2, '/'.join([k for k in member.get('department').values()]))
-#         worksheet.write(row, 3, '/'.join([k for k in member.get('project').keys()]))
-#         worksheet.write(row, 4, '/'.join([k for k in member.get('project').values()]))
+    for row, member in enumerate(data, start=1):
+        worksheet.write(row, 0, member.get('fullname'))
+        worksheet.write(row, 1, '/'.join([k for k in member.get('department').keys()]))
+        worksheet.write(row, 2, '/'.join([k for k in member.get('department').values()]))
+        worksheet.write(row, 3, '/'.join([k for k in member.get('project').keys()]))
+        worksheet.write(row, 4, '/'.join([k for k in member.get('project').values()]))
 
-#     for column in range(len(headers)):
-#         worksheet.set_column(column, column, 20)
-#     for row in range(len(data) + 1):
-#         worksheet.set_row(row, 20)
+    for column in range(len(headers)):
+        worksheet.set_column(column, column, 20)
+    for row in range(len(data) + 1):
+        worksheet.set_row(row, 20)
     
-#     workbook.close()
+    workbook.close()
 
-#     return jsonify({'success': f'{filename} successfully exported'})
+    return jsonify({'success': f'{filename} successfully exported'})
