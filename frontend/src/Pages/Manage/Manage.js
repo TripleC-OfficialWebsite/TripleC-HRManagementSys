@@ -43,7 +43,7 @@ const Manage = () => {
     setMembergithub(github);
     setMembergrade(grade);
     setMemberLinkin(linkin);
-    setMemberLinkin(wechat);
+    setMemberwechat(wechat);
   };
 
   useEffect(() => {
