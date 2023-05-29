@@ -71,9 +71,9 @@ def get_range(page_num, limit):
     data = list(member_collection.find({}, {"_id": 0}).skip(page_num * limit).limit(limit))
     return update_secret_ret_data(data)
 
-@memberAPI.route("/member_list", methods=["GET"])
-def get_all_department_or_project():
-    query = request.args.get('type').lower()
+@memberAPI.route("/member_list/<string:type>", methods=["GET"])
+def get_all_department_or_project(type):
+    query = type.lower()
     if query not in ['department','project']:
         return jsonify({'error': 'Invalid type (please enter \'department\' or \'project\')'}), 400
     items = set()
@@ -86,33 +86,6 @@ def get_all_department_or_project():
 
     sorted_items = sorted(items)
     return jsonify(list(sorted_items))
-
-# Retrieve documents matching the department/Project and role
-# @memberAPI.route("/member_search", methods=["GET"])
-# def search():
-#     departments = request.args.get('department')
-#     projects = request.args.get('project')
-
-#     data = []
-#     dept_pairs = departments.split(",")
-#     proj_pairs = projects.split(",")
-
-#     departments_data = {p.split(":")[0]: p.split(":")[1] for p in dept_pairs}
-#     projects_data = {p.split(":")[0]: p.split(":")[1] for p in proj_pairs}
-
-#     for dept,role in departments_data.items():
-#         document = member_collection.find({"department": dept.upper(),"pos": role.title()}, {"_id": 0})
-#         for d in document:
-#             if d not in data:
-#                 data.append(d)
-    
-#     for proj,role in projects_data.items():
-#         document = member_collection.find({"project_group": proj,"pos_group": role.title()}, {"_id": 0})
-#         for d in document:
-#             if d not in data:
-#                 data.append(d)
-    
-#     return jsonify(data)
 
 # Remove a member by fullname or id
 
@@ -149,15 +122,38 @@ def add_member():
 
     return jsonify({'_id': member_id, 'status_code': 0})
 
+@memberAPI.route("/member_filter/<departments>/<projects>", methods=["GET"])
+def filter_by(departments, projects):
+
+    if not departments or not projects:
+        return jsonify({'error': 'Missing input departments or projects'}), 400
+
+    dept_pairs = departments.split(",")
+    proj_pairs = projects.split(",")
+
+    query = {
+        "$or": [
+            {"department." + dept: {"$exists": True}} for dept in dept_pairs
+        ],
+        "$or": [
+            {"project." + proj: {"$exists": True}} for proj in proj_pairs
+        ]
+    }
+
+    documents = secret.find(query, {"_id": 0})
+    data = list(documents)
+
+    return update_secret_ret_data(data)
+
+
 @memberAPI.route("/member_sort/<string:type>&<string:order>", methods=["GET"])
 def sort_alphabetically(type,order):
-    ascending = True
-    sortBy = type.lower()
-    if sortBy not in ['ascending','descending']:
+    if order is None:
         ascending = True
     else:
-        ascending = sortBy == 'ascending'
-
+        ascending = order.lower() == 'ascending'
+    sortBy = type.lower()
+    
     if sortBy not in ['department','project']:
         return jsonify({'error': 'Missing input type'}), 400
     
@@ -168,21 +164,21 @@ def sort_alphabetically(type,order):
         sorted_data.reverse()
     return update_secret_ret_data(sorted_data)
 
-@memberAPI.route("/member_search_name", methods=["GET"])
-def search_name():
-    name = request.args.get('name')
-    if name is None:
+@memberAPI.route("/member_search_name/<string:letter>", methods=["GET"])
+def search_name(letter):
+    print(letter)
+    if letter is None:
         return jsonify({'error': 'Missing input name'}), 400
     
     data = secret.find({},{'_id':0})
-    data = list(filter(lambda member:member['fullname'][0] == name,data))
+    data = list(filter(lambda member:member['fullname'][0] == letter,data))
     
     return update_secret_ret_data(data)
 
 
 @memberAPI.route("/member_add_file", methods=["POST"])
 def add_member_file():
-    filename = request.args.get('filename')
+    filename = request.json['filename']
 
     if filename is None:
         return jsonify({'error': 'Missing input filename'}), 400
@@ -217,32 +213,32 @@ def add_member_file():
 
 
 
-@memberAPI.route("/member_export", methods=["GET"])
-def export_Member_file():
-    filename = 'Members.xlsx'
-    workbook = xlsxwriter.Workbook(filename)
-    worksheet = workbook.add_worksheet()
+# @memberAPI.route("/member_export", methods=["GET"])
+# def export_Member_file():
+#     filename = 'Members.xlsx'
+#     workbook = xlsxwriter.Workbook(filename)
+#     worksheet = workbook.add_worksheet()
 
-    data = list(secret.find({}, {"_id": 0}))
+#     data = list(secret.find({}, {"_id": 0}))
 
-    # Set headers
-    header_format = workbook.add_format({'bold': True})
-    headers = ['fullname', 'department', 'pos', 'project_group', 'pos_group']
-    for column, header in enumerate(headers):
-        worksheet.write(0, column, header, header_format)
+#     # Set headers
+#     header_format = workbook.add_format({'bold': True})
+#     headers = ['fullname', 'department', 'pos', 'project_group', 'pos_group']
+#     for column, header in enumerate(headers):
+#         worksheet.write(0, column, header, header_format)
 
-    for row, member in enumerate(data, start=1):
-        worksheet.write(row, 0, member.get('fullname'))
-        worksheet.write(row, 1, '/'.join([k for k in member.get('department').keys()]))
-        worksheet.write(row, 2, '/'.join([k for k in member.get('department').values()]))
-        worksheet.write(row, 3, '/'.join([k for k in member.get('project').keys()]))
-        worksheet.write(row, 4, '/'.join([k for k in member.get('project').values()]))
+#     for row, member in enumerate(data, start=1):
+#         worksheet.write(row, 0, member.get('fullname'))
+#         worksheet.write(row, 1, '/'.join([k for k in member.get('department').keys()]))
+#         worksheet.write(row, 2, '/'.join([k for k in member.get('department').values()]))
+#         worksheet.write(row, 3, '/'.join([k for k in member.get('project').keys()]))
+#         worksheet.write(row, 4, '/'.join([k for k in member.get('project').values()]))
 
-    for column in range(len(headers)):
-        worksheet.set_column(column, column, 20)
-    for row in range(len(data) + 1):
-        worksheet.set_row(row, 20)
+#     for column in range(len(headers)):
+#         worksheet.set_column(column, column, 20)
+#     for row in range(len(data) + 1):
+#         worksheet.set_row(row, 20)
     
-    workbook.close()
+#     workbook.close()
 
-    return jsonify({'success': f'{filename} successfully exported'})
+#     return jsonify({'success': f'{filename} successfully exported'})
