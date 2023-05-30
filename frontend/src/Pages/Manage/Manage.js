@@ -13,6 +13,7 @@ const Manage = () => {
   const [memberDepartmentPosition, setMemberDepartmentPosition] = useState("");
   const [memberProject, setMemberProject] = useState([]);
   const [memberProjectRole, setMemberProjectRole] = useState([]);
+  const [memberPicture, setMemberPicture] = useState([]);
 
   const fetchMembers = async () => {
     const response = await fetch(
@@ -37,6 +38,7 @@ const Manage = () => {
     const grade = data.map((member) => member.grade);
     const wechat = data.map((member) => member.wechat);
     const departmentObj = data.map((member) => member.department);
+    const picture = data.map((member) => member.picture);
 
     setMemberIds(ids);
     setMemberNames(names);
@@ -46,6 +48,7 @@ const Manage = () => {
     setMemberLinkin(linkin);
     setMemberGrade(grade);
     setMemberWechat(wechat);
+    setMemberPicture(picture);
     const departments = [];
     const depRoles = [];
     for (const item of departmentObj) {
@@ -73,7 +76,7 @@ const Manage = () => {
       <h1>Manage</h1>
       {memberIds.map((id, index) => (
         <div key={id}>
-          <p>ID: {id} Name: {memberNames[index]} Department: {memberDepartment[index].join("/")} Department Position: {memberDepartmentPosition[index].join("/")} Project: {memberProject[index].join("/")} Project Role: {memberProjectRole[index].join("/")} Grade: {memberGrade[index]} Email: {memberEmail[index]} Wechat: {memberWechat[index]} Enroll Time: {memberEnrollTime[index]} Linkin: {memberLinkin[index]} Github: {memberGithub[index]} </p>
+          <p>ID: {id} Name: {memberNames[index]} Department: {memberDepartment[index].join("/")} Department Position: {memberDepartmentPosition[index].join("/")} Project: {memberProject[index].join("/")} Project Role: {memberProjectRole[index].join("/")} Grade: {memberGrade[index]} Email: {memberEmail[index]} Wechat: {memberWechat[index]} Enroll Time: {memberEnrollTime[index]} Linkin: {memberLinkin[index]} Github: {memberGithub[index]} Picture: {memberPicture[index]} </p>
         </div>
       ))}
     </div>
