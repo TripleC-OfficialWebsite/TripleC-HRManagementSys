@@ -13,9 +13,9 @@ function App() {
   const router = createHashRouter(
     createRoutesFromElements(
       <Route>
-        <Route path="/" element={<LogIn />} />
+        <Route path="/add" element={<LogIn />} />
         <Route path="/manage" element={<Manage />} />
-        <Route path="/add" element={<Add />} />
+        <Route path="/" element={<Add />} />
       </Route>
     )
   );
