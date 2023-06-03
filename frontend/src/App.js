@@ -9,13 +9,15 @@ import LogIn from "./Pages/LogIn/LogIn";
 import Manage from "./Pages/Manage/Manage";
 import Add from "./Pages/Add/Add";
 
+import "./styles/Add.css";
+
 function App() {
   const router = createHashRouter(
     createRoutesFromElements(
       <Route>
-        <Route path="/add" element={<LogIn />} />
+        <Route path="/" element={<LogIn />} />
         <Route path="/manage" element={<Manage />} />
-        <Route path="/" element={<Add />} />
+        <Route path="/add" element={<Add />} />
       </Route>
     )
   );

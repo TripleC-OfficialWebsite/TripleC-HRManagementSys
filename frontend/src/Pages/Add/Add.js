@@ -76,7 +76,7 @@ const Add = () => {
   };
 
   const addToBackend = async (data) => {
-    const response = await fetch(`http://127.0.0.1:5000/mem/member_add`, {
+    const response = await fetch(`https://best-backend-ever.herokuapp.com/mem/member_add`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
