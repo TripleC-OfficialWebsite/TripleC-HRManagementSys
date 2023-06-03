@@ -15,9 +15,15 @@ const Manage = () => {
   const [memberProjectRole, setMemberProjectRole] = useState([]);
   const [memberPicture, setMemberPicture] = useState([]);
 
-  const fetchMembers = async () => {
+
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState([]);
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+  const fetchtotal = async () => {
     const response = await fetch(
-      `http://127.0.0.1:5000/mem/member_range/0&10`,
+      `https://best-backend-ever.herokuapp.com/mem/member`,
       {
         method: "GET",
         headers: {
@@ -26,19 +32,32 @@ const Manage = () => {
       }
     );
 
+    const d = await response.json();
+    setTotalPages(Math.ceil(d.length/10))
+  };
+  const fetchMembers = async () => {
+    const response = await fetch(
+      `https://best-backend-ever.herokuapp.com/mem/member_range/${currentPage}&10`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
     const data = await response.json();
-    console.log(data);
     const ids = data.map((member) => member._id);
     const names = data.map((member) => member.fullname);
-    const projectObj = data.map((member) => member.project);
     const email = data.map((member) => member.email);
     const enrollTime = data.map((member) => member.enroll_time);
     const github = data.map((member) => member.github);
     const linkin = data.map((member) => member.linkedin);
     const grade = data.map((member) => member.grade);
     const wechat = data.map((member) => member.wechat);
-    const departmentObj = data.map((member) => member.department);
     const picture = data.map((member) => member.picture);
+    const departmentObj = data.map((member) => member.department);
+    const projectObj = data.map((member) => member.project);
+    
 
     setMemberIds(ids);
     setMemberNames(names);
@@ -66,18 +85,64 @@ const Manage = () => {
     setMemberProject(projects);
     setMemberProjectRole(projRoles);
   };
-
   useEffect(() => {
     fetchMembers();
   }, []);
-
+  useEffect(() => {
+    fetchMembers();
+    fetchtotal();
+  },[currentPage]);
   return (
     <div>
       <h1>Manage</h1>
+<table class="table table-hover">
+  <thead>
+    <tr>
+      <th scope="col">ID</th>
+      <th scope="col">Name</th>
+      <th scope="col">Department</th>
+      <th scope="col">Department Position</th>
+      <th scope="col">Project</th>
+      <th scope="col">Project Role</th>
+    </tr>
+  </thead>
+  </table>
       {memberIds.map((id, index) => (
         <div key={id}>
-          <p>ID: {id} Name: {memberNames[index]} Department: {memberDepartment[index].join("/")} Department Position: {memberDepartmentPosition[index].join("/")} Project: {memberProject[index].join("/")} Project Role: {memberProjectRole[index].join("/")} Grade: {memberGrade[index]} Email: {memberEmail[index]} Wechat: {memberWechat[index]} Enroll Time: {memberEnrollTime[index]} Linkin: {memberLinkin[index]} Github: {memberGithub[index]} Picture: {memberPicture[index]} </p>
+  <table class="table table-hover">
+  <tbody>
+    <tr>
+      <th scope="row">{index + 1}</th>
+      <td > {memberNames[index]}</td>
+      <td>{memberDepartment[index].join("/")} </td>
+      <td>{memberDepartmentPosition[index].join("/")}</td>
+      <td>{memberProject[index].join("/")}</td>
+      <td>{memberProjectRole[index].join("/")}</td>
+    </tr>
+  </tbody>
+</table>
         </div>
+      ))}
+      <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          />
+    </div>
+  );
+};
+
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  return (
+    <div className="pagination">
+      {[...Array(totalPages)].map((_, index) => (
+        <button
+          key={index}
+          className={index === currentPage ? "active" : ""}
+          onClick={() => onPageChange(index)}
+        >
+          {index + 1}
+        </button>
       ))}
     </div>
   );
