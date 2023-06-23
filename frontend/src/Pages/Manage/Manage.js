@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 
 const Manage = () => {
   const [memberIds, setMemberIds] = useState([]);
@@ -14,10 +15,32 @@ const Manage = () => {
   const [memberProject, setMemberProject] = useState([]);
   const [memberProjectRole, setMemberProjectRole] = useState([]);
   const [memberPicture, setMemberPicture] = useState([]);
-
-
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState([]);
+
+  const HandleDelete = async (fullname) => {
+    const response = await fetch(`https://best-backend-ever.herokuapp.com/mem//member_delete/${fullname}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const result = await response.json();
+    try {
+      if (!response.ok) {
+        alert(result.error);
+      } else {
+        console.log(result);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    const navigate = useNavigate();
+    // refresh
+    navigate(0);
+  }
+
+
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
@@ -31,7 +54,6 @@ const Manage = () => {
         },
       }
     );
-
     const d = await response.json();
     setTotalPages(Math.ceil(d.length/10))
   };
@@ -57,7 +79,6 @@ const Manage = () => {
     const picture = data.map((member) => member.picture);
     const departmentObj = data.map((member) => member.department);
     const projectObj = data.map((member) => member.project);
-    
 
     setMemberIds(ids);
     setMemberNames(names);
@@ -104,6 +125,7 @@ const Manage = () => {
       <th scope="col">Department Position</th>
       <th scope="col">Project</th>
       <th scope="col">Project Role</th>
+      <th scope="col">Functionality</th>
     </tr>
   </thead>
   </table>
@@ -118,6 +140,11 @@ const Manage = () => {
       <td>{memberDepartmentPosition[index].join("/")}</td>
       <td>{memberProject[index].join("/")}</td>
       <td>{memberProjectRole[index].join("/")}</td>
+      <td><button
+          key={index}
+          onClick={() => HandleDelete(memberNames[index])}> delete
+        </button>
+      </td>
     </tr>
   </tbody>
 </table>
@@ -128,7 +155,7 @@ const Manage = () => {
           totalPages={totalPages}
           onPageChange={handlePageChange}
           />
-    </div>
+  </div>
   );
 };
 
