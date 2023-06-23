@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const Manage = () => {
   const [memberIds, setMemberIds] = useState([]);
@@ -17,28 +17,6 @@ const Manage = () => {
   const [memberPicture, setMemberPicture] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState([]);
-
-  const HandleDelete = async (fullname) => {
-    const response = await fetch(`https://best-backend-ever.herokuapp.com/mem//member_delete/${fullname}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    const result = await response.json();
-    try {
-      if (!response.ok) {
-        alert(result.error);
-      } else {
-        console.log(result);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-    const navigate = useNavigate();
-    // refresh
-    navigate(0);
-  }
 
 
   const handlePageChange = (pageNumber) => {
@@ -106,48 +84,76 @@ const Manage = () => {
     setMemberProject(projects);
     setMemberProjectRole(projRoles);
   };
+
+  const HandleDelete = async (fullname) => {
+    const response = await fetch(`https://best-backend-ever.herokuapp.com/mem/member_delete/${fullname}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    fetchMembers();
+
+    const result = await response.json();
+
+    try {
+      if (!response.ok) {
+        alert(result.error);
+      } else {
+        console.log(result);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    
+  }
+
   useEffect(() => {
     fetchMembers();
   }, []);
+
   useEffect(() => {
     fetchMembers();
     fetchtotal();
   },[currentPage]);
+
   return (
     <div>
       <h1>Manage</h1>
-<table class="table table-hover">
-  <thead>
-    <tr>
-      <th scope="col">ID</th>
-      <th scope="col">Name</th>
-      <th scope="col">Department</th>
-      <th scope="col">Department Position</th>
-      <th scope="col">Project</th>
-      <th scope="col">Project Role</th>
-      <th scope="col">Functionality</th>
-    </tr>
-  </thead>
-  </table>
-      {memberIds.map((id, index) => (
-        <div key={id}>
-  <table class="table table-hover">
-  <tbody>
-    <tr>
-      <th scope="row">{index + 1}</th>
-      <td > {memberNames[index]}</td>
-      <td>{memberDepartment[index].join("/")} </td>
-      <td>{memberDepartmentPosition[index].join("/")}</td>
-      <td>{memberProject[index].join("/")}</td>
-      <td>{memberProjectRole[index].join("/")}</td>
-      <td><button
-          key={index}
-          onClick={() => HandleDelete(memberNames[index])}> delete
-        </button>
-      </td>
-    </tr>
-  </tbody>
-</table>
+      <Link className="btn btn-primary" to="/add">Add a member</Link>
+
+      <table className="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Name</th>
+            <th scope="col">Department</th>
+            <th scope="col">Department Position</th>
+            <th scope="col">Project</th>
+            <th scope="col">Project Role</th>
+            <th scope="col">Functionality</th>
+          </tr>
+        </thead>
+        </table>
+            {memberIds.map((id, index) => (
+              <div key={id}>
+        <table className="table table-hover">
+        <tbody>
+          <tr>
+            <th scope="row">{index + 1}</th>
+            <td > {memberNames[index]}</td>
+            <td>{memberDepartment[index].join("/")} </td>
+            <td>{memberDepartmentPosition[index].join("/")}</td>
+            <td>{memberProject[index].join("/")}</td>
+            <td>{memberProjectRole[index].join("/")}</td>
+            <td><button
+                key={index}
+                onClick={() => HandleDelete(memberNames[index])}> delete
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
         </div>
       ))}
       <Pagination
