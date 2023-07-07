@@ -128,9 +128,9 @@ const Manage = () => {
             <th scope="col">Name</th>
             <th scope="col">Department</th>
             <th scope="col">Department Position</th>
-            <th scope="col">Project</th>
-            <th scope="col">Project Role</th>
-            <th scope="col">Functionality</th>
+            <th scope="col">Project Group</th>
+            <th scope="col">Project Group Position</th>
+            <th scope="col"></th>
           </tr>
         </thead>
         <tbody>
