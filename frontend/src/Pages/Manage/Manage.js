@@ -85,7 +85,7 @@ const Manage = () => {
     setMemberProjectRole(projRoles);
   };
 
-  const HandleDelete = async (fullname) => {
+  const handleDelete = async (fullname) => {
     const response = await fetch(`https://best-backend-ever.herokuapp.com/mem/member_delete/${fullname}`, {
       method: 'DELETE',
       headers: {
@@ -121,7 +121,6 @@ const Manage = () => {
     <div>
       <h1>Manage</h1>
       <Link className="btn btn-primary" to="/add">Add a member</Link>
-
       <table className="table table-hover">
         <thead>
           <tr>
@@ -134,33 +133,29 @@ const Manage = () => {
             <th scope="col">Functionality</th>
           </tr>
         </thead>
-        </table>
-            {memberIds.map((id, index) => (
-              <div key={id}>
-        <table className="table table-hover">
         <tbody>
+        {memberIds.map((id, index) => (
           <tr>
-            <th scope="row">{index + 1}</th>
-            <td > {memberNames[index]}</td>
-            <td>{memberDepartment[index].join("/")} </td>
-            <td>{memberDepartmentPosition[index].join("/")}</td>
-            <td>{memberProject[index].join("/")}</td>
-            <td>{memberProjectRole[index].join("/")}</td>
-            <td><button
-                key={index}
-                onClick={() => HandleDelete(memberNames[index])}> delete
-              </button>
-            </td>
-          </tr>
+          <th scope="row">{index + 1}</th>
+          <td > {memberNames[index]}</td>
+          <td>{memberDepartment[index].join("/")} </td>
+          <td>{memberDepartmentPosition[index].join("/")}</td>
+          <td>{memberProject[index].join("/")}</td>
+          <td>{memberProjectRole[index].join("/")}</td>
+          <td><button
+              key={index}
+              onClick={() => handleDelete(memberNames[index])}> delete
+            </button>
+          </td>
+        </tr>
+        ))}
         </tbody>
-      </table>
-        </div>
-      ))}
       <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}
           />
+        </table>
   </div>
   );
 };
