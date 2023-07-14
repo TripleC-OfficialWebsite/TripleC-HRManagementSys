@@ -19,7 +19,7 @@ function App() {
         {/* <Route path="/" element={<LogIn />} /> */}
         <Route path="/" element={<Manage />} />
         <Route path="/add" element={<Add />} />
-        <Route path="/manage/memberdetails/:id" element={<MemberDetails />} />
+        <Route path="/manage/memberdetails/:name" element={<MemberDetails />} />
       </Route>
     )
   );

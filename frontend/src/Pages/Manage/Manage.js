@@ -143,17 +143,13 @@ const Manage = () => {
                 <td>{memberProject[index].join("/")}</td>
                 <td>{memberProjectRole[index].join("/")}</td>
                 <td>
-                <Link to={`/manage/memberdetails/${id}`}>more detail</Link>
+                <Link to={`/manage/memberdetails/${memberNames[index]}`}>more detail</Link>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
       ))}
-
-      <Routes>
-        <Route path="/manage/memberdetails/:id" element={<MemberDetails memberIds={memberIds} memberNames={memberNames} />} />
-      </Routes>
 
       <Pagination
           currentPage={currentPage}
