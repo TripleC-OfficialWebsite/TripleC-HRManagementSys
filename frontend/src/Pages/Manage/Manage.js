@@ -204,7 +204,7 @@ const Manage = () => {
         {memberIds.map((id, index) => (
           <tr>
           <th scope="row">{index + 1}</th>
-          <td > {memberNames[index].join("/")}</td>
+          <td > {memberNames[index]}</td>
           <td> {memberDepartment[index].join("/")}</td>
           <td>{memberDepartmentPosition[index].join("/")}</td>
           <td>{memberProject[index].join("/")}</td>

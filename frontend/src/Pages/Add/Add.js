@@ -38,20 +38,22 @@ const Add = () => {
         return;
     }
 
+    let departments = {};
+    departmentArray.forEach((key, i) => departments[key] = departmentPositionArray[i]);
+    let project = {};
+    projectGroupArray.forEach((key, i) => project[key] = projectGroupPositionArray[i]);
     // Create an object with the parsed values
     const data = {
       fullname,
-      department: departmentArray,
-      departmentPosition: departmentPositionArray,
-      projectGroup: projectGroupArray,
-      projectGroupPosition: projectGroupPositionArray,
-      yearsInCollege,
+      department: departments,
+      project,
+      grade: yearsInCollege,
       email,
-      wechatId,
-      joinTime,
+      wechat: wechatId,
+      enrollTime: joinTime,
       linkedin,
       github,
-      photo,
+      picture: photo,
     };
 
     // Perform further processing with the data as needed
