@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 
 const Manage = () => {
   const [memberIds, setMemberIds] = useState([]);
@@ -19,7 +19,6 @@ const Manage = () => {
   const [totalPages, setTotalPages] = useState([]);
   const [input, setInput] = useState("");
 
-
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
@@ -34,7 +33,7 @@ const Manage = () => {
       }
     );
     const d = await response.json();
-    setTotalPages(Math.ceil(d.length/10))
+    setTotalPages(Math.ceil(d.length / 10));
   };
   const fetchMembers = async () => {
     const response = await fetch(
@@ -87,12 +86,15 @@ const Manage = () => {
   };
 
   const handleDelete = async (fullname) => {
-    const response = await fetch(`https://best-backend-ever.herokuapp.com/mem/member_delete/${fullname}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await fetch(
+      `https://best-backend-ever.herokuapp.com/mem/member_delete/${fullname}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
     fetchMembers();
     const result = await response.json();
     try {
@@ -104,16 +106,21 @@ const Manage = () => {
     } catch (error) {
       console.log(error);
     }
-    
-  }
+  };
+
+  const handleUpdate = () => {};
+
   const handleSearch = async (e) => {
     console.log(input);
-    const response = await fetch(`https://best-backend-ever.herokuapp.com/mem/member/${e}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await fetch(
+      `https://best-backend-ever.herokuapp.com/mem/member/${e}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
     const r = await response.json();
     setInput("");
     try {
@@ -121,43 +128,43 @@ const Manage = () => {
         alert(r.error);
       } else {
         console.log(r);
-    const ids = r.map((member) => member._id);
-    const names = r.map((member) => member.fullname);
-    const email = r.map((member) => member.email);
-    const enrollTime = r.map((member) => member.enroll_time);
-    const github = r.map((member) => member.github);
-    const linkin = r.map((member) => member.linkedin);
-    const grade = r.map((member) => member.grade);
-    const wechat = r.map((member) => member.wechat);
-    const picture = r.map((member) => member.picture);
-    const departmentObj = r.map((member) => member.department);
-    const projectObj = r.map((member) => member.project);
+        const ids = r.map((member) => member._id);
+        const names = r.map((member) => member.fullname);
+        const email = r.map((member) => member.email);
+        const enrollTime = r.map((member) => member.enroll_time);
+        const github = r.map((member) => member.github);
+        const linkin = r.map((member) => member.linkedin);
+        const grade = r.map((member) => member.grade);
+        const wechat = r.map((member) => member.wechat);
+        const picture = r.map((member) => member.picture);
+        const departmentObj = r.map((member) => member.department);
+        const projectObj = r.map((member) => member.project);
 
-    setMemberIds(ids);
-    setMemberNames(names);
-    setMemberEmail(email);
-    setMemberEnrollTime(enrollTime);
-    setMemberGithub(github);
-    setMemberLinkin(linkin);
-    setMemberGrade(grade);
-    setMemberWechat(wechat);
-    setMemberPicture(picture);
-    const departments = [];
-    const depRoles = [];
-    for (const item of departmentObj) {
-      departments.push(Object.keys(item));
-      depRoles.push(Object.values(item));
-    }
-    setMemberDepartment(departments);
-    setMemberDepartmentPosition(depRoles);
-    const projects = [];
-    const projRoles = [];
-    for (const item of projectObj) {
-      projects.push(Object.keys(item));
-      projRoles.push(Object.values(item));
-    }
-    setMemberProject(projects);
-    setMemberProjectRole(projRoles);
+        setMemberIds(ids);
+        setMemberNames(names);
+        setMemberEmail(email);
+        setMemberEnrollTime(enrollTime);
+        setMemberGithub(github);
+        setMemberLinkin(linkin);
+        setMemberGrade(grade);
+        setMemberWechat(wechat);
+        setMemberPicture(picture);
+        const departments = [];
+        const depRoles = [];
+        for (const item of departmentObj) {
+          departments.push(Object.keys(item));
+          depRoles.push(Object.values(item));
+        }
+        setMemberDepartment(departments);
+        setMemberDepartmentPosition(depRoles);
+        const projects = [];
+        const projRoles = [];
+        for (const item of projectObj) {
+          projects.push(Object.keys(item));
+          projRoles.push(Object.values(item));
+        }
+        setMemberProject(projects);
+        setMemberProjectRole(projRoles);
       }
     } catch (error) {
       console.log(error);
@@ -172,21 +179,33 @@ const Manage = () => {
   useEffect(() => {
     fetchMembers();
     fetchtotal();
-  },[currentPage]);
-
+  }, [currentPage]);
 
   return (
     <div>
-      <h1>Manage</h1>
-      <Link className="btn btn-primary" to="/add">Add a member</Link>
+      <h1>Manage Member</h1>
+      <Link className="btn btn-primary" to="/add">
+        Add a member
+      </Link>
+      <Link className="btn btn-primary" to="/project">
+        Manage Projects
+      </Link>
+
       <div className="input-wrapper">
-        <input placeholder="Search..." value={input} onChange={(e) => setInput(e.target.value)} />
-        <button className="submit btn btn-primary" onClick={() => handleSearch(input)}>
-        Search
-      </button>
-      <button className="submit btn btn-primary" onClick={fetchMembers}>
-        Back to all
-      </button>
+        <input
+          placeholder="Search..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+        />
+        <button
+          className="submit btn btn-primary"
+          onClick={() => handleSearch(input)}
+        >
+          Search
+        </button>
+        <button className="submit btn btn-primary" onClick={fetchMembers}>
+          Back to all
+        </button>
       </div>
       <table className="table table-hover">
         <thead>
@@ -201,29 +220,47 @@ const Manage = () => {
           </tr>
         </thead>
         <tbody>
-        {memberIds.map((id, index) => (
-          <tr>
-          <th scope="row">{index + 1}</th>
-          <td > {memberNames[index]}</td>
-          <td> {memberDepartment[index].join("/")}</td>
-          <td>{memberDepartmentPosition[index].join("/")}</td>
-          <td>{memberProject[index].join("/")}</td>
-          <td>{memberProjectRole[index].join("/")}</td>
-          <td><button
-              key={index}
-              onClick={() => handleDelete(memberNames[index])}> delete
-            </button>
-          </td>
-        </tr>
-        ))}
+          {memberIds.map((id, index) => (
+            <tr>
+              <th scope="row">{index + 1}</th>
+              <td> {memberNames[index]}</td>
+              <td> {memberDepartment[index].join("/")}</td>
+              <td>{memberDepartmentPosition[index].join("/")}</td>
+              <td>{memberProject[index].join("/")}</td>
+              <td>{memberProjectRole[index].join("/")}</td>
+              <td>
+                <button
+                  className="btn-secondary btn"
+                  key={index}
+                  onClick={() => handleDelete(memberNames[index])}
+                >
+                  {" "}
+                  delete
+                </button>
+
+                <Link
+                  className="btn-secondary btn"
+                  to={`/add/${memberNames[index]}/false`}
+                >
+                  Update
+                </Link>
+                <Link
+                  className="btn-secondary btn"
+                  to={`/manage/memberdetails/${memberNames[index]}`}
+                >
+                  More detail
+                </Link>
+              </td>
+            </tr>
+          ))}
         </tbody>
-      <Pagination
+        <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}
-          />
-        </table>
-  </div>
+        />
+      </table>
+    </div>
   );
 };
 
