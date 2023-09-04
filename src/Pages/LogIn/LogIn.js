@@ -8,22 +8,6 @@ const LogIn = () => {
   });
   const navigate = useNavigate();
 
-  const getResult = async (e) => {
-    e.preventDefault();
-    await fetch(`https://best-backend-ever.herokuapp.com/admin/get`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => response.json())
-      .then((result) => {
-        console.log("success");
-        console.log(result);
-      })
-      .catch((error) => console.log(error));
-  };
-
   const validateUser = async (e) => {
     e.preventDefault();
     let base = "https://best-backend-ever.herokuapp.com/admin/admin_validate";
@@ -72,7 +56,6 @@ const LogIn = () => {
       <button className="submit btn btn-primary" onClick={validateUser}>
         Sign In
       </button>
-      <button onClick={getResult}>Get Current Table</button>
     </div>
   );
 };
