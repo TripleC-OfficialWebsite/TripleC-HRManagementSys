@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/TripleC-HRManagementSys/static/css/main.a77220ae.css",
+    "main.js": "/TripleC-HRManagementSys/static/js/main.66b0eede.js",
+    "index.html": "/TripleC-HRManagementSys/index.html",
+    "main.a77220ae.css.map": "/TripleC-HRManagementSys/static/css/main.a77220ae.css.map",
+    "main.66b0eede.js.map": "/TripleC-HRManagementSys/static/js/main.66b0eede.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.a77220ae.css",
+    "static/js/main.66b0eede.js"
+  ]
+}
