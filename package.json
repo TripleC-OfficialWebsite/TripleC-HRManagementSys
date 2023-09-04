@@ -1,6 +1,6 @@
 {
   "homepage": "https://triplec-officialwebsite.github.io/TripleC-HRManagementSys",
-  "name": "frontend",
+  "name": "TripleC-HRManagementSys",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
