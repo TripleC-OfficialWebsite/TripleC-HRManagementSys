@@ -5,7 +5,7 @@ from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 # from app import collections
 
-adminAPI = Blueprint('admin_api', __name__)
+adminAPI = Blueprint('admin_api', __name__, url_prefix='/admin')
 
 uri = "mongodb+srv://root:28GJiZtTYasykeil@cluster0.4lirrab.mongodb.net/?retryWrites=true&w=majority"
 
@@ -28,7 +28,7 @@ except Exception as e:
 # db = client.manageSys
 test = admin_collection
 
-@adminAPI.route("/admin", methods=["GET"])
+@adminAPI.route("/get", methods=["GET"])
 def get():
     data = []
     for document in test.find({}, {"_id": 0}):
